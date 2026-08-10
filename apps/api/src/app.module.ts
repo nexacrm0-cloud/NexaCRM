@@ -1,4 +1,4 @@
-import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule, RequestMethod } from '@nestjs/common';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
@@ -38,6 +38,7 @@ import { AgentsModule } from './modules/agents/agents.module';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 import { WhatsAppModule } from './modules/whatsapp/whatsapp.module';
 import { InternalModule } from './modules/internal/internal.module';
+import { HealthModule } from './modules/health/health.module';
 import { TenantMiddleware } from './common/middleware/tenant.middleware';
 
 @Module({
@@ -141,6 +142,7 @@ import { TenantMiddleware } from './common/middleware/tenant.middleware';
     WhatsAppModule,
     InternalModule,
     InventoryModule,
+    HealthModule,
   ],
   providers: [
     {
@@ -166,6 +168,9 @@ export class AppModule implements NestModule {
     // so apply it only to the API prefix. It skips its own EXCLUDED_PATHS for
     // unauthenticated flows (login, register, webhooks, etc.).
     consumer.apply(CsrfMiddleware).forRoutes({ path: 'api/v1/*', method: 'ALL' as any });
-    consumer.apply(TenantMiddleware).forRoutes('*');
+    consumer
+      .apply(TenantMiddleware)
+      .exclude({ path: 'api/v1/health', method: RequestMethod.GET })
+      .forRoutes('*');
   }
 }

@@ -1,0 +1,121 @@
+# Render Blueprint for Nexa CRM
+# ===============================
+# Deploys: Postgres + Redis + API (NestJS) + Web (Next.js) in one push.
+#
+# USAGE:
+#   1. Push this file to GitHub (master).
+#   2. In Render Dashboard -> New -> Blueprint, connect the repo.
+#   3. Render provisions nexa-db, nexa-redis, nexa-api and nexa-web
+#      automatically. Connection strings are wired via fromDatabase /
+#      fromService (no copy/paste needed).
+#   4. Fill the `sync: false` secrets in each service's Environment tab.
+#      generateValue keys (JWT_SECRET, etc.) are auto-created and hidden.
+#
+# NOTE on the monorepo: the Dockerfiles COPY from the repo ROOT (they need
+# package.json, pnpm-workspace.yaml, packages/*), so we must NOT set rootDir.
+# dockerfilePath is relative to the repo root and the build context is the
+# whole repo. Changing rootDir would break the COPY paths.
+
+databases:
+  - name: nexa-db
+    databaseName: nexa
+    user: nexa
+    plan: starter
+    ipAllowList: [] # empty = allow only from same-region Render services
+
+services:
+  # ---------------- API (NestJS) ----------------
+  - type: web
+    name: nexa-api
+    runtime: docker
+    plan: starter
+    dockerfilePath: apps/api/Dockerfile
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: API_PORT
+        value: "4000"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: nexa-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: nexa-redis
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: INTERNAL_API_KEY
+        generateValue: true
+      - key: WHATSAPP_VERIFY_TOKEN
+        generateValue: true
+      - key: FRONTEND_URL
+        value: https://nexa-web.onrender.com
+        sync: false # verify the actual subdomain after first deploy
+      - key: PAYMENT_PROVIDER_KIND
+        value: mercadopago
+      # ---- Fill these in the Render dashboard after deploy (sync:false
+      # keeps manual dashboard edits safe from blueprint re-syncs) ----
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: WHATSAPP_APP_SECRET
+        sync: false
+      - key: WHATSAPP_TOKEN
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: MP_ACCESS_TOKEN
+        sync: false
+      - key: MP_WEBHOOK_SECRET
+        sync: false
+      - key: MP_SANDBOX_MODE
+        value: "false"
+      - key: SENTRY_DSN
+        sync: false
+
+  # ---------------- Web (Next.js) ----------------
+  - type: web
+    name: nexa-web
+    runtime: docker
+    plan: starter
+    dockerfilePath: apps/web/Dockerfile
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Next.js standalone server.js reads process.env.PORT. Render injects
+      # PORT=10000 by default, which would mismatch the Dockerfile EXPOSE 3000
+      # — pin it so the container listens exactly where Render routes traffic.
+      - key: PORT
+        value: "3000"
+      # The Next.js rewrites proxy /api/* and /uploads/* to this URL on the
+      # server. NEXT_PUBLIC_API_URL is inlined into the client bundle at
+      # build time, so it MUST be present here (it is, at build).
+      - key: API_URL
+        value: https://nexa-api.onrender.com
+        sync: false # verify the actual subdomain after first deploy
+      - key: NEXT_PUBLIC_API_URL
+        value: https://nexa-api.onrender.com/api/v1
+        sync: false # verify the actual subdomain after first deploy
+      - key: SENTRY_AUTH_TOKEN
+        sync: false
+
+  # ---------------- Redis (Key Value) ----------------
+  - type: redis
+    name: nexa-redis
+    plan: starter
+    ipAllowList: [] # empty = allow only from same-region Render services

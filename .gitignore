@@ -5,11 +5,44 @@ dist/
 .env
 .env.local
 .env.*.local
+.env.prod
+.env.prod.*
+.env.production
+.env.*.production
 .DS_Store
 coverage/
 *.tsbuildinfo
+apps/api/*.err
+apps/api/*.txt
+apps/api/*.log
+apps/web/*.log
+uploads/
 .turbo/
 # Local n8n workflow exports tend to contain inlined secrets (agent/internal
 # API keys, LLM provider keys). They should never be committed; deploy them
 # as separate environment variables / secrets in the n8n instance instead.
 n8n-workflows/
+
+# Internal dev/debug scripts, seeders and notes kept locally but intentionally
+# not tracked in the repo (deployed secrets/seeds live in the dashboard).
+/*.mjs
+/*.bat
+/*.ps1
+/*.vbs
+/scripts/*.bat
+/docs/
+/Dockerfile
+/ARCHITECTURE_REVIEW_GATE.md
+/DEMO_SCRIPT.md
+/SPRINT1_REPORT.md
+/NEXA_CRM_NotebookLM_Source.txt
+/NEXA_TECHNICAL_BLUEPRINT_v1.0.md
+/PROMPT_PRESENTACION_NEXA.md
+/PROMPT_VIDEO_NOTEBOOKLM.txt
+/packages/database/_who.js
+/packages/database/clean-*.js
+/packages/database/seed-*.ts
+/packages/database/seed-*.js
+/packages/database/update-*.ts
+/tunnel.js
+/*.png
