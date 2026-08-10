@@ -1,0 +1,22 @@
+{
+  "name": "@nexa/domain",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "echo 'lint ok'",
+    "test": "jest --passWithNoTests",
+    "clean": "echo 'clean ok'"
+  },
+  "devDependencies": {
+    "@nexa/config-typescript": "workspace:*",
+    "@types/jest": "^29.5.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.6.0"
+  }
+}

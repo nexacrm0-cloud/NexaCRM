@@ -1,0 +1,323 @@
+NEXA CRM — DOSSIER DE PRODUCTO PARA NOTEBOOKLM
+====================================================
+Fuente de verdad para guion de video promocional.
+Tono: editorial, español rioplatense, directo, sin hype SaaS.
+Audiencia: dueño o gerente de PyME argentina o latinoamericana.
+Vocabulario de marca: "vos", "cotizá", "facturá", "cancelás", "recibo", "sello", numeración liminar (01·, 02·, 03·).
+
+----------------------------------------------------
+1. QUÉ ES NEXA CRM
+----------------------------------------------------
+
+Nexa es un CRM y facturador inteligente para PyMEs latinoamericanas. Su tagline oficial: "Cotizá, facturá y cobrá sin fricción."
+
+La diferencia con un CRM tradicional como Pipedrive o HubSpot es estructural, no cosmética. Esos son CRM pasivos: el equipo carga datos y después alguien arma un reporte a mano. Nexa es activo: los datos entran una sola vez y a partir de ahí la inteligencia del producto analiza, alerta, pronostica y automatiza. Vos preguntás, Nexa responde.
+
+El producto corre en español rioplatense, moneda ARS por defecto (con soporte para USD, MXN, COP, CLP, EUR, BRL, PEN, UYU), y está listo para la realidad argentina: factura electrónica A/B/C/E/M con CAE, punto de venta, CUIT y condición de IVA. Es el CRM construido en Argentina para PyMEs que facturan en AFIP.
+
+----------------------------------------------------
+2. LOS 17 MÓDULOS QUE TIENE HOY
+----------------------------------------------------
+
+Nexa no es un tablero de un solo truco. Hoy tiene 17 módulos cubriendo todo el flujo comercial y operativo de una PyME:
+
+01· DASHBOARD EJECUTIVO — KPIs en vivo: ventas del mes, pipeline ponderado, oportunidades abiertas, tareas vencidas, gráfico de tendencia (últimos 6 meses) y feed de actividad reciente.
+02· CLIENTES — alta, búsqueda, exportación CSV, etiquetas, vista 360° con deals, tareas, presupuestos y actividad. Soft-delete: nunca se pierde un cliente.
+03· PIPELINE — Kanban con drag & drop, etapas configurables con probabilidad, win/lose stages, forecast ponderado, filtros avanzados y move optimista (sin esperar al servidor).
+04· TAREAS — CRUD con prioridades LOW/MEDIUM/HIGH/URGENT, estados PENDING/IN_PROGRESS/COMPLETED/CANCELLED, vencimiento y recordatorio, asignación a usuarios, vinculación a cliente u oportunidad.
+05· PRESUPUESTOS — cotizaciones con numeración automática Q-AÑO-XXXX, ítems con cantidad y precio, cálculo de subtotal/IVA/total, validación de vigencia, estados DRAFT/SENT/ACCEPTED/REJECTED/EXPIRED, descarga de PDF, envío por email.
+06· CALENDARIO — vistas Mes/Semana/Día/Agenda, tipos Reunión/Llamada/Tarea/Recordatorio, eventos recurrentes con reglas (semanal, mensual) y excepciones, vinculación a cliente u oportunidad.
+07· ACTIVIDAD — feed polimórfico de toda la mutación de datos, filtrable por entidad.
+08· FACTURACIÓN — facturas A/B/C/E/M con punto de venta, CUIT, condición de IVA y CAE. Estados DRAFT/ISSUED/PAID/PARTIALLY_PAID/OVERDUE/CANCELLED. Genera PDF listo para imprimir o enviar.
+09· INVENTARIO — productos con SKU, precio y costo, control de stock on/off, mínimo y máximo, variantes con atributos, categorías. Dashboard con valor de inventario (al costo), ingreso potencial (al precio), sin stock y stock bajo.
+10· MOVIMIENTOS — bitácora trazable de cada alta, baja o ajuste de stock, con motivo y referencia.
+11· AUTOMATIZACIONES — workflows que conectan eventos del CRM con n8n. Se disparan en eventos como client.created, deal.created, quote.sent, invoice.issued. Tiene 5 subrutas: marketplace de plantillas, mis flujos, mis suscripciones, gestor owner y transferencias.
+12· CONECTORES — 11 integraciones out-of-the-box.
+13· AGENTES IA — catálogo de 6 agentes activables en un click.
+14· EQUIPO — miembros del workspace con roles Dueño, Administrador, Miembro y Espectador. Invitaciones por email con rol asignado.
+15· SOPORTE — back-office para el equipo de Nexa.
+16· CONFIGURACIÓN — datos de organización, moneda, timezone, formato de fecha, 2FA con código QR, claves de API con expiración.
+17· ONBOARDING — asistente guiado al primer login.
+
+----------------------------------------------------
+3. EL COPILOT — IA QUE RESPONDE PREGUNTAS DE NEGOCIO
+----------------------------------------------------
+
+El Business Copilot es el centro del producto. Es un asistente que vive dentro del CRM y responde en lenguaje natural consultas sobre el estado del negocio en ese mismo instante, con datos vivos, no datos estáticos.
+
+No es un chat enlatado. Ejecuta 28 herramientas registradas que tocan la base Postgres en tiempo real. Se armó con OpenAI y está preparado para fallback a Claude (Anthropic) y Gemini (Google). La detección de intención está en español: si escribís "qué oportunidades están abiertas" o "cómo va el pipeline" no necesita traducción, está entrenado en rioplatense.
+
+Algunas preguntas que responde en segundos, con datos reales del momento:
+
+- "resumen ejecutivo" → devuelve un health score de 0 a 100, KPIs, alertas y las top 3 acciones priorizadas.
+- "alertas proactivas" → lista tareas vencidas, oportunidades estancadas hace más de 20 días, presupuestos sin responder hace más de 7 días, clientes inactivos 90 días.
+- "cómo va el pipeline" → Salud por etapa: win rate, velocidad, nivel de estancamiento, riesgos con severidad HIGH/MEDIUM/LOW.
+- "salud de clientes" → Scoring de churn risk por cliente: EXCELENTE, BUENO, REGULAR, RIESGO, CRÍTICO.
+- "pronóstico financiero 6 meses" → Proyección mensual con confianza decreciente, pipeline ponderado y supuestos.
+- "cuánto stock tengo" → Valor de inventario al costo, ingreso potencial al precio, sin stock, stock bajo, top movidos 30 días.
+- "productos con stock bajo" → Lista con déficit y cantidad sugerida para reordenar.
+- "stock de MacBook Pro" → Lookup fuzzy por SKU o nombre, con stock actual, mínimo, máximo y unidad.
+- "cuánto vendo este mes" → Total de deals ganados en el mes, con comparación contra el mes anterior.
+- "presupuestos sin responder" → Lista los enviados hace más de 7 días.
+
+Como lo dice el guion de demo de Nexa: un gerente hace estas preguntas en Slack o por email y espera horas. Acá la respuesta es instantánea, con datos vivos del CRM, no datos de hace una semana.
+
+----------------------------------------------------
+4. LOS 6 AGENTES IA QUE TRABAJAN 24/7
+----------------------------------------------------
+
+Sobre el Copilot hay una capa de agentes. Cada uno vive en una tarea específica, corre en background y escribe en el CRM como si fuera un empleado más, con su propia API Key.
+
+1) BUSINESS COPILOT (plan Pro)
+El analista IA general. Analiza ventas, pipeline, clientes y tareas para dar insights proactivos, alertas y recomendaciones accionables. Features concretas: insights proactivos, forecast financiero, salud del pipeline, scoring de churn y acciones recomendadas.
+
+2) AGENTE DE VENTAS (plan Pro)
+Atiende consultas de clientes, genera presupuestos automáticos, califica leads y crea oportunidades en el pipeline. Disponible 24/7 para capturar leads cuando el equipo de ventas ya está durmiendo.
+
+3) ASISTENTE WhatsApp (plan Pro)
+Agente IA que gestiona conversaciones de WhatsApp Business: responde consultas, califica leads, agenda reuniones y da seguimiento automático. Tiene chat inteligente con análisis de sentimiento y auto-reply.
+
+4) AGENTE DE SEGUIMIENTO (plan Starter)
+Revisa clientes inactivos, detecta presupuestos vencidos y tareas pendientes, envía recordatorios automáticos y crea tareas de seguimiento. Reporte semanal por email o Slack. Su propósito: que nunca se escape una venta por olvido.
+
+5) ANALISTA DE NEGOCIOS (plan Pro)
+Envía cada lunes a la mañana un resumen ejecutivo en Slack o email. Trae análisis de ventas del mes, detección de tendencias, identificación de riesgos y recomendaciones accionables. Es el reporte que un analista junior armaría a mano, automático.
+
+6) AGENTE DE OPERACIONES (plan Enterprise)
+Organiza tareas, detecta cuellos de botella en el pipeline, coordina procesos entre equipos y optimiza la eficiencia operativa del negocio.
+
+Cada agente activo muestra log en vivo: input, output, duración en milisegundos y tasa de éxito. La integración con n8n se hace con un API Key "ag_" que va como header en el webhook. En el propio repositorio ya hay workflows de n8n exportados listos para importar (follow-up-agent.json, sales-agent.json, whatsapp-ai-agent.json).
+
+----------------------------------------------------
+5. AUTOMATIZACIONES Y PLANTILLAS
+----------------------------------------------------
+
+Las automatizaciones conectan eventos del CRM con n8n. Se configuran una vez y después corren solas. La mechanics es simple: cuando pasa algo en Nexa (se crea un cliente, se envía un presupuesto, se emite una factura, se completa una tarea) el producto dispara un webhook a tu n8n. n8n hace lo que vos quieras con ese dato.
+
+Hay 6 plantillas listas para instalar en un click:
+
+- AGENTE WhatsApp — PRIMER MENSAJE AUTOMÁTICO (plan Starter, ARS $4.900/mes, destacado). Cuando llega un cliente nuevo, mandale el primer mensaje de WhatsApp desde tu agente. Trigger: client.created.
+- AGENTE WhatsApp — AVISAR PRESUPUESTO ENVIADO (plan Starter, ARS $3.900/mes). Notifica al cliente por WhatsApp cuando le envías un presupuesto. Trigger: quote.sent.
+- SLACK — AVISO DE OPORTUNIDAD NUEVA (plan Starter, ARS $2.900/mes). Posteá en Slack cada nueva oportunidad creada en el pipeline. Trigger: deal.created.
+- MAILCHIMP — SUSCRIBIR CLIENTE NUEVO (plan Starter, ARS $2.900/mes). Sumá cada cliente nuevo a tu lista de Mailchimp. Trigger: client.created.
+- EQUIPO FINANCIERO — ALERTA DE FACTURA EMITIDA (plan Pro, ARS $6.900/mes). Aviso interno al área financiera cuando emitís una factura. Trigger: invoice.issued.
+- RECORDATORIO DE TAREAS VENCIDAS (plan Starter, ARS $2.900/mes). Cuando una tarea vence, mandale un recordatorio al responsable. Trigger: task.created.
+
+Las plantillas traen 14 días de prueba gratis y sin tarjeta de crédito. La activación toma menos de un minuto. Si no te queda, cancelás con un toque.
+
+----------------------------------------------------
+6. 11 CONECTORES OUT-OF-THE-BOX
+-------------------------------------------------
+
+Más allá de las plantillas, hay 11 conectores configurables que enganchan Nexa con el resto del stack de la PyME:
+
+- WhatsApp Business — API oficial de Meta, con manejo de duplicados por idempotencia.
+- Email (SMTP) — transaccionales y campañas de marketing.
+- Google Calendar — sincronizar eventos y citas.
+- Slack — notificaciones a canales de Slack.
+- Microsoft Teams — notificaciones a canales de Teams.
+- Stripe — pagos y suscripciones internacionales.
+- Mercado Pago — pagos para Argentina y LATAM.
+- Shopify — productos, pedidos y clientes sincronizados.
+- WooCommerce — tu tienda enganchada al CRM.
+- Google Sheets — importar y exportar a planillas.
+- Webhook genérico — POST o GET a cualquier URL custom.
+
+----------------------------------------------------
+7. DIFERENCIAL ARGENTINA / AFIP
+----------------------------------------------------
+
+Esto es lo que ningún CRM extranjero tiene:
+
+- Modelo de factura ya diseñado para la RG de AFIP: admite tipos A, B, C, E y M.
+- Campos nativos por documento: punto de venta (pointOfSale), CUIT del receptor, condición de IVA (Responsable Inscripto, Monotributo, Consumidor Final, Exento), CAE y fecha de vencimiento del CAE.
+- Generador de PDF con el tipo de factura, el punto de venta y el CAE en el cuerpo del documento, listo para imprimir o mandar.
+- Moneda default ARS y formato de números en es-AR.
+- Soporte de todas las monedas LATAM por settings: USD, MXN, COP, CLP, EUR, BRL, PEN, UYU.
+- Mercado Pago como conector de pagos LATAM.
+- Soporte argentino (nexacrm0@gmail.com).
+
+La integración con el WSFE de AFIP está sembrada estructuralmente (el schema ya contiene todos los campos que el web service exige). La conexión online con AFIP es post-beta.
+
+----------------------------------------------------
+8. SEGURIDAD Y MULTI-TENANT REAL
+----------------------------------------------------
+
+Nexa está construido con estándares de empresa, no de hobby:
+
+- MULTI-TENANT AISLADO: cada organización tiene su subset de datos garantizado por Row-Level Security (RLS) en PostgreSQL. En runtime, cada request setea la sesión de Postgres con set_config('app.organization_id', ID_ORG, true) y la base misma filtra las filas. No es filtrado en código, es a nivel de motor de base de datos. No hay forma de que un cliente vea los datos de otro.
+- JWT en cookies HttpOnly, con rotación de refresh token y detección de robo.
+- 2FA con código QR (TOTP) configurable por usuario.
+- Rate limiting global con Nginx-Throttler, y rate limiting por organización y por endpoint de IA en Redis.
+- Audit logs particionados por mes, con política de retención declarada: activity 6 meses, audit 2 años.
+- Logs de inventario: cada alta, baja o ajuste queda registrado con motivo y referencia para auditoría y reposición.
+- Validación de Zod en frontend y backend con el mismo schema compartido en @nexa/shared.
+- Protección SSRF: los webhooks salientes validan la URL destino.
+
+----------------------------------------------------
+9. PLANES Y PRECIOS
+----------------------------------------------------
+
+Todos los planes incluyen soporte, actualizaciones y sin permanencia mínima.
+
+PLAN BÁSICO (Gratis)
+- 3 usuarios
+- 100 clientes
+- 100 MB de storage
+- CRM completo, pipeline, tareas, calendario, presupuestos y facturación.
+
+PLAN STARTER (USD 29/mes) — POPULAR
+- 10 usuarios
+- 1.000 clientes
+- 1 GB de storage
+- Todo lo de Básico
+- Centro de automatizaciones
+- Agente de Seguimiento IA
+- Soporte por email
+
+PLAN PRO (USD 79/mes) — MÁS ELEGIDO
+- 25 usuarios
+- 10.000 clientes
+- 5 GB de storage
+- Todo lo de Starter
+- Agente de Ventas IA
+- Analista de Negocios IA
+- Conectores premium
+- Soporte prioritario
+
+PLAN ENTERPRISE (USD 199/mes) — MÁXIMO
+- Usuarios ilimitados
+- Clientes ilimitados
+- Storage ilimitado
+- Todo lo de Pro
+- Agente de Operaciones IA
+- API completa
+- Soporte dedicado
+- SLA 99.9%
+- Onboarding personalizado
+
+Las automatizaciones (plantillas de n8n) se cobran adicional, en ARS, entre $2.900 y $6.900 por mes, con 14 días de trial gratis y sin tarjeta.
+
+----------------------------------------------------
+10. ROI INMEDIATO — LA MATEMÁTICA
+----------------------------------------------------
+
+Un dato que usar para el cierre:
+Un analista junior en Argentina cuesta en torno a 1.500 dólares por mes, trabaja 8 horas por día, con feriados y vacaciones, con un período de onboarding de 60 días.
+
+Nexa Pro cuesta 79 dólares por mes, corre 24/7, no toma vacaciones, no necesita onboarding y arranca a entregar insights el día que activás el trial. El business case se cierra solo.
+
+----------------------------------------------------
+11. STACK TÉCNICO (para el CTO quisquilloso)
+----------------------------------------------------
+
+BACKEND
+- NestJS 10 con Express, Helmet, cookies HttpOnly, CSRF.
+- Prisma 6 con PostgreSQL 16.
+- Redis para cache y pub/sub.
+- OpenAI SDK para LLM (con placeholders para Claude y Gemini).
+- Zod 3 para validación compartida entre front y back.
+- pdfkit para generación de PDF de presupuestos y facturas.
+- Resend para email transaccional.
+- rrule para recurrencias de calendario.
+- axios para webhooks salientes.
+
+FRONTEND
+- Next.js 14 con App Router y React Server Components.
+- Tailwind 3 con design system custom editorial.
+- Radix UI + componentes shadcn/ui.
+- TanStack Query 5 para data fetching y optimistic updates.
+- react-hook-form con validación Zod compartida.
+- recharts para visualizaciones.
+- cmdk para command palette global con Ctrl+K.
+
+INFRA
+- Monorepo con pnpm workspaces y Turborepo.
+- Paquetes internos: @nexa/database, @nexa/shared, @nexa/domain, @nexa/config-eslint, @nexa/config-typescript.
+- Docker Compose para dev (Postgres + Redis + n8n) y Dockerfile multi-stage para prod.
+- Husky + lint-staged + prettier. 84 tests en el repositorio.
+
+----------------------------------------------------
+12. OBJECTION HANDLING
+--------------------------------------------------
+
+En el cierre, tres objeciones frecuentes y cómo se respondieron:
+
+OBJECIÓN 1: "Ya tenemos Pipedrive o HubSpot."
+RESPUESTA: Esos son CRM pasivos, guardan datos. Nexa es activo: la IA analiza, alerta, pronostica y automatiza. El Copilot responde preguntas de negocio, no solo muestra listas.
+
+OBJECIÓN 2: "Es muy complejo para mi equipo."
+RESPUESTA: El onboarding es guiado. El Copilot te dice qué hacer hoy (prioridades del día). Los agentes corren solos, no necesitás mantenerlos. Menos clicks, más insights.
+
+OBJECIÓN 3: "Migración de datos, vuelve a cero mi pipeline."
+RESPUESTA: Importamos CSV o Excel en minutos. Tenemos API abierta para sincronizar con tu stack actual.
+
+----------------------------------------------------
+13. CALLTO ACTION FINAL
+----------------------------------------------------
+
+La propuesta de Nexa para cerrar: proba 14 días gratis con tus datos reales. Si en la semana 1 el Copilot no te ahorra 5 horas por semana o no detecta al menos 1 riesgo real en tu negocio, no pagás.
+
+Contacto: nexacrm0@gmail.com
+Slogan del cierre: "Cotizá, facturá y cobrá sin fricción."
+
+----------------------------------------------------
+14. TONO DE MARCA PARA EL GUION
+----------------------------------------------------
+
+Vocabulario editorial de la marca:
+- Segunda persona rioplatense: vos, tenés, activás, cancelás, cotizá, facturá, probás.
+- Numeración liminar: "01·", "02·", "03·".
+- Vocabulario concreto: pipeline, deal, presupuesto, factura A/B/C, CAE, workflow, Copilot, agente IA, conector.
+- Vocabulario prohibido: "unleash", "supercharge", "10x", "game changer", "powerful", emojis en copy.
+- Estética visual: recibo, boleta, sello postal, tipografía Fraunces, sellos uppercase con borde doble y tracking ancho, eyebrow con cuadrado naranja antepuesto, color naranja Nexa como acento principal, tonos cobalt (info), verde (OK), alizarin (alerta), paper hueso de fondo.
+
+----------------------------------------------------
+15. VOCABULARIO DE MARCA — FRASES REALES VERIFICADAS
+----------------------------------------------------
+
+Estas frases son del producto, deben citarse textuales en cualquier material generado:
+
+"Cotizá, facturá y cobrá sin fricción."
+"Elegí el plan que se ajusta a tu negocio."
+"Desde un CRM básico hasta agentes de IA que operan 24/7."
+"Cambiás de plan cuando quieras, sin letra chica."
+"Todos los planes incluyen soporte, actualizaciones y sin permanencia mínimo."
+"Agentes y automatizaciones que trabajan mientras dormís."
+"Activás. Probás. Si no te queda, cancelás."
+"Sin permanencia, sin llamada comercial. La activación toma menos de un minuto."
+"Esos son CRM pasivos. Nexa es activo: IA analiza, alerta, pronostica, automatiza."
+"Un gerente hace estas preguntas en Slack o email y espera horas. Acá la respuesta es instantánea, con datos vivos de tu CRM."
+"Agentes que corren tareas por vos, 24/7. Activá los que ya pagás."
+"Cada alta, baja o ajuste queda registrado. Trazabilidad para auditoría."
+"14 días de prueba gratis, sin tarjeta."
+"Si en la semana 1 el Copilot no te ahorra 5 horas por semana o no detecta al menos 1 riesgo real, no pagás."
+"¿Algo especial? Contactanos. nexacrm0@gmail.com"
+"Nexa — CRM y facturación para PyMEs latinoamericanas."
+"Nexa CRM gratis para arrancar."
+
+----------------------------------------------------
+16. CASOS DE USO POR RUBRO
+----------------------------------------------------
+
+- E-commerce con Shopify o WooCommerce: importá productos y pedidos, controlá stock, enviá presupuesto y factura desde el mismo lugar, automatizá WhatsApp.
+- Estudios contables y financieros: facturación A/B/C/E/M con CAE y trazabilidad, alertas al área financiera en cada factura emitida, audit log para cumplir.
+- Agencias y consultoras: calendario con reuniones recurrentes, opciones de pipeline personalizadas, resumen ejecutivo cada lunes en Slack, agente WhatsApp para captar leads.
+- Comercios importadores / distribuidores: inventario con variantes, mínimo y máximo stock ajustable, alertas de stock bajo con qty sugerida de reposición, conversión automática de quote a factura con descuento atómico de stock.
+- Servicios profesionales (abogados, arquitectos, consultores): tareas con prioridades y recordatorios, pipeline de oportunidades por cliente, recurrencias de reuniones, reporte semanal de seguimiento.
+
+----------------------------------------------------
+17. CÓMO POSICIONAR EL VIDEO
+----------------------------------------------------
+
+El video tiene que vender el "ah" moment en los primeros 10 segundos. No abrí con logo. Abri con el problema: "Si tu CRM no te dice qué hacer hoy, no es un CRM, es una planilla cara."
+
+Después probás el "wow": un gerente escribiendo "alertas proactivas" en el prompt del Copilot y recibiendo una lista con tareas vencidas, oportunidades estancadas y presupuestos sin responder, en segundos学习能力.
+
+El cierre no es un descuento ni un código. Es la garantía: "14 días con tus datos reales. Si en la semana 1 el Copilot no te ahorra 5 horas por semana, no pagás."
+
+La promesa es clara: cuando termines el video, querés entrar a probarlo. No quieren ver el CRM, quieren ver al CRM trabajar por ellos.
+
+--------------------------------------------------------------------------------
+FIN DEL DOSSIER.
+--------------------------------------------------------------------------------

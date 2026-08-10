@@ -1,0 +1,335 @@
+(node:23264) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440
+          throw new PrismaClientInitializationError(error.message, this.config.clientVersion!, error.error_code)
+                ^
+
+PrismaClientInitializationError: Can't reach database server at `localhost:5434`
+
+Please make sure your database server is running at `localhost:5434`.
+    at r (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440:17)
+    at async Proxy.onModuleInit (C:\Users\mateo\Documents\Nexa CRM\packages\database\src\prisma.service.ts:20:5)
+    at async Promise.all (index 0)
+    at async callModuleInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\hooks\on-module-init.hook.js:43:5)
+    at async NestApplication.callInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application-context.js:234:13)
+    at async NestApplication.init (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:100:9)
+    at async NestApplication.listen (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:170:13)
+    at async bootstrap (C:\Users\mateo\Documents\Nexa CRM\apps\api\src\main.ts:91:3) {
+  clientVersion: '6.19.3',
+  errorCode: 'P1001',
+  retryable: undefined
+}
+
+Node.js v24.16.0
+C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440
+          throw new PrismaClientInitializationError(error.message, this.config.clientVersion!, error.error_code)
+                ^
+
+PrismaClientInitializationError: Can't reach database server at `localhost:5434`
+
+Please make sure your database server is running at `localhost:5434`.
+    at r (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440:17)
+    at async Proxy.onModuleInit (C:\Users\mateo\Documents\Nexa CRM\packages\database\src\prisma.service.ts:20:5)
+    at async Promise.all (index 0)
+    at async callModuleInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\hooks\on-module-init.hook.js:43:5)
+    at async NestApplication.callInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application-context.js:234:13)
+    at async NestApplication.init (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:100:9)
+    at async NestApplication.listen (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:170:13)
+    at async bootstrap (C:\Users\mateo\Documents\Nexa CRM\apps\api\src\main.ts:91:3) {
+  clientVersion: '6.19.3',
+  errorCode: 'P1001',
+  retryable: undefined
+}
+
+Node.js v24.16.0
+C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440
+          throw new PrismaClientInitializationError(error.message, this.config.clientVersion!, error.error_code)
+                ^
+
+PrismaClientInitializationError: Can't reach database server at `localhost:5434`
+
+Please make sure your database server is running at `localhost:5434`.
+    at r (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440:17)
+    at async Proxy.onModuleInit (C:\Users\mateo\Documents\Nexa CRM\packages\database\src\prisma.service.ts:20:5)
+    at async Promise.all (index 0)
+    at async callModuleInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\hooks\on-module-init.hook.js:43:5)
+    at async NestApplication.callInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application-context.js:234:13)
+    at async NestApplication.init (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:100:9)
+    at async NestApplication.listen (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:170:13)
+    at async bootstrap (C:\Users\mateo\Documents\Nexa CRM\apps\api\src\main.ts:91:3) {
+  clientVersion: '6.19.3',
+  errorCode: 'P1001',
+  retryable: undefined
+}
+
+Node.js v24.16.0
+C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440
+          throw new PrismaClientInitializationError(error.message, this.config.clientVersion!, error.error_code)
+                ^
+
+PrismaClientInitializationError: Can't reach database server at `localhost:5434`
+
+Please make sure your database server is running at `localhost:5434`.
+    at r (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440:17)
+    at async Proxy.onModuleInit (C:\Users\mateo\Documents\Nexa CRM\packages\database\src\prisma.service.ts:20:5)
+    at async Promise.all (index 0)
+    at async callModuleInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\hooks\on-module-init.hook.js:43:5)
+    at async NestApplication.callInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application-context.js:234:13)
+    at async NestApplication.init (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:100:9)
+    at async NestApplication.listen (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:170:13)
+    at async bootstrap (C:\Users\mateo\Documents\Nexa CRM\apps\api\src\main.ts:91:3) {
+  clientVersion: '6.19.3',
+  errorCode: 'P1001',
+  retryable: undefined
+}
+
+Node.js v24.16.0
+C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440
+          throw new PrismaClientInitializationError(error.message, this.config.clientVersion!, error.error_code)
+                ^
+
+PrismaClientInitializationError: Can't reach database server at `localhost:5434`
+
+Please make sure your database server is running at `localhost:5434`.
+    at r (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440:17)
+    at async Proxy.onModuleInit (C:\Users\mateo\Documents\Nexa CRM\packages\database\src\prisma.service.ts:20:5)
+    at async Promise.all (index 0)
+    at async callModuleInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\hooks\on-module-init.hook.js:43:5)
+    at async NestApplication.callInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application-context.js:234:13)
+    at async NestApplication.init (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:100:9)
+    at async NestApplication.listen (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:170:13)
+    at async bootstrap (C:\Users\mateo\Documents\Nexa CRM\apps\api\src\main.ts:91:3) {
+  clientVersion: '6.19.3',
+  errorCode: 'P1001',
+  retryable: undefined
+}
+
+Node.js v24.16.0
+C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440
+          throw new PrismaClientInitializationError(error.message, this.config.clientVersion!, error.error_code)
+                ^
+
+PrismaClientInitializationError: Can't reach database server at `localhost:5434`
+
+Please make sure your database server is running at `localhost:5434`.
+    at r (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440:17)
+    at async Proxy.onModuleInit (C:\Users\mateo\Documents\Nexa CRM\packages\database\src\prisma.service.ts:20:5)
+    at async Promise.all (index 0)
+    at async callModuleInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\hooks\on-module-init.hook.js:43:5)
+    at async NestApplication.callInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application-context.js:234:13)
+    at async NestApplication.init (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:100:9)
+    at async NestApplication.listen (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:170:13)
+    at async bootstrap (C:\Users\mateo\Documents\Nexa CRM\apps\api\src\main.ts:91:3) {
+  clientVersion: '6.19.3',
+  errorCode: 'P1001',
+  retryable: undefined
+}
+
+Node.js v24.16.0
+C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440
+          throw new PrismaClientInitializationError(error.message, this.config.clientVersion!, error.error_code)
+                ^
+
+PrismaClientInitializationError: Can't reach database server at `localhost:5434`
+
+Please make sure your database server is running at `localhost:5434`.
+    at r (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440:17)
+    at async Proxy.onModuleInit (C:\Users\mateo\Documents\Nexa CRM\packages\database\src\prisma.service.ts:20:5)
+    at async Promise.all (index 0)
+    at async callModuleInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\hooks\on-module-init.hook.js:43:5)
+    at async NestApplication.callInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application-context.js:234:13)
+    at async NestApplication.init (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:100:9)
+    at async NestApplication.listen (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:170:13)
+    at async bootstrap (C:\Users\mateo\Documents\Nexa CRM\apps\api\src\main.ts:91:3) {
+  clientVersion: '6.19.3',
+  errorCode: 'P1001',
+  retryable: undefined
+}
+
+Node.js v24.16.0
+C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440
+          throw new PrismaClientInitializationError(error.message, this.config.clientVersion!, error.error_code)
+                ^
+
+PrismaClientInitializationError: Can't reach database server at `localhost:5434`
+
+Please make sure your database server is running at `localhost:5434`.
+    at r (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440:17)
+    at async Proxy.onModuleInit (C:\Users\mateo\Documents\Nexa CRM\packages\database\src\prisma.service.ts:20:5)
+    at async Promise.all (index 0)
+    at async callModuleInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\hooks\on-module-init.hook.js:43:5)
+    at async NestApplication.callInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application-context.js:234:13)
+    at async NestApplication.init (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:100:9)
+    at async NestApplication.listen (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:170:13)
+    at async bootstrap (C:\Users\mateo\Documents\Nexa CRM\apps\api\src\main.ts:91:3) {
+  clientVersion: '6.19.3',
+  errorCode: 'P1001',
+  retryable: undefined
+}
+
+Node.js v24.16.0
+C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440
+          throw new PrismaClientInitializationError(error.message, this.config.clientVersion!, error.error_code)
+                ^
+
+PrismaClientInitializationError: Can't reach database server at `localhost:5434`
+
+Please make sure your database server is running at `localhost:5434`.
+    at r (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440:17)
+    at async Proxy.onModuleInit (C:\Users\mateo\Documents\Nexa CRM\packages\database\src\prisma.service.ts:20:5)
+    at async Promise.all (index 0)
+    at async callModuleInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\hooks\on-module-init.hook.js:43:5)
+    at async NestApplication.callInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application-context.js:234:13)
+    at async NestApplication.init (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:100:9)
+    at async NestApplication.listen (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:170:13)
+    at async bootstrap (C:\Users\mateo\Documents\Nexa CRM\apps\api\src\main.ts:91:3) {
+  clientVersion: '6.19.3',
+  errorCode: 'P1001',
+  retryable: undefined
+}
+
+Node.js v24.16.0
+C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440
+          throw new PrismaClientInitializationError(error.message, this.config.clientVersion!, error.error_code)
+                ^
+
+PrismaClientInitializationError: Can't reach database server at `localhost:5434`
+
+Please make sure your database server is running at `localhost:5434`.
+    at r (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440:17)
+    at async Proxy.onModuleInit (C:\Users\mateo\Documents\Nexa CRM\packages\database\src\prisma.service.ts:20:5)
+    at async Promise.all (index 0)
+    at async callModuleInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\hooks\on-module-init.hook.js:43:5)
+    at async NestApplication.callInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application-context.js:234:13)
+    at async NestApplication.init (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:100:9)
+    at async NestApplication.listen (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:170:13)
+    at async bootstrap (C:\Users\mateo\Documents\Nexa CRM\apps\api\src\main.ts:91:3) {
+  clientVersion: '6.19.3',
+  errorCode: 'P1001',
+  retryable: undefined
+}
+
+Node.js v24.16.0
+node:internal/modules/cjs/loader:1503
+  throw err;
+  ^
+
+Error: Cannot find module 'C:\Users\mateo\Documents\Nexa CRM\apps\api\dist\main'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1500:15)
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1071:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1095:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1116:12)
+    at Module._load (node:internal/modules/cjs/loader:1285:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v24.16.0
+C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440
+          throw new PrismaClientInitializationError(error.message, this.config.clientVersion!, error.error_code)
+                ^
+
+PrismaClientInitializationError: Can't reach database server at `localhost:5434`
+
+Please make sure your database server is running at `localhost:5434`.
+    at r (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440:17)
+    at async Proxy.onModuleInit (C:\Users\mateo\Documents\Nexa CRM\packages\database\src\prisma.service.ts:20:5)
+    at async Promise.all (index 0)
+    at async callModuleInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\hooks\on-module-init.hook.js:43:5)
+    at async NestApplication.callInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application-context.js:234:13)
+    at async NestApplication.init (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:100:9)
+    at async NestApplication.listen (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:170:13)
+    at async bootstrap (C:\Users\mateo\Documents\Nexa CRM\apps\api\src\main.ts:91:3) {
+  clientVersion: '6.19.3',
+  errorCode: 'P1001',
+  retryable: undefined
+}
+
+Node.js v24.16.0
+C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440
+          throw new PrismaClientInitializationError(error.message, this.config.clientVersion!, error.error_code)
+                ^
+
+PrismaClientInitializationError: Can't reach database server at `localhost:5434`
+
+Please make sure your database server is running at `localhost:5434`.
+    at r (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440:17)
+    at async Proxy.onModuleInit (C:\Users\mateo\Documents\Nexa CRM\packages\database\src\prisma.service.ts:20:5)
+    at async Promise.all (index 0)
+    at async callModuleInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\hooks\on-module-init.hook.js:43:5)
+    at async NestApplication.callInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application-context.js:234:13)
+    at async NestApplication.init (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:100:9)
+    at async NestApplication.listen (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:170:13)
+    at async bootstrap (C:\Users\mateo\Documents\Nexa CRM\apps\api\src\main.ts:91:3) {
+  clientVersion: '6.19.3',
+  errorCode: 'P1001',
+  retryable: undefined
+}
+
+Node.js v24.16.0
+C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440
+          throw new PrismaClientInitializationError(error.message, this.config.clientVersion!, error.error_code)
+                ^
+
+PrismaClientInitializationError: Can't reach database server at `localhost:5434`
+
+Please make sure your database server is running at `localhost:5434`.
+    at r (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440:17)
+    at async Proxy.onModuleInit (C:\Users\mateo\Documents\Nexa CRM\packages\database\src\prisma.service.ts:20:5)
+    at async Promise.all (index 0)
+    at async callModuleInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\hooks\on-module-init.hook.js:43:5)
+    at async NestApplication.callInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application-context.js:234:13)
+    at async NestApplication.init (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:100:9)
+    at async NestApplication.listen (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:170:13)
+    at async bootstrap (C:\Users\mateo\Documents\Nexa CRM\apps\api\src\main.ts:91:3) {
+  clientVersion: '6.19.3',
+  errorCode: 'P1001',
+  retryable: undefined
+}
+
+Node.js v24.16.0
+C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440
+          throw new PrismaClientInitializationError(error.message, this.config.clientVersion!, error.error_code)
+                ^
+
+PrismaClientInitializationError: Can't reach database server at `localhost:5434`
+
+Please make sure your database server is running at `localhost:5434`.
+    at r (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440:17)
+    at async Proxy.onModuleInit (C:\Users\mateo\Documents\Nexa CRM\packages\database\src\prisma.service.ts:20:5)
+    at async Promise.all (index 0)
+    at async callModuleInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\hooks\on-module-init.hook.js:43:5)
+    at async NestApplication.callInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application-context.js:234:13)
+    at async NestApplication.init (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:100:9)
+    at async NestApplication.listen (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:170:13)
+    at async bootstrap (C:\Users\mateo\Documents\Nexa CRM\apps\api\src\main.ts:91:3) {
+  clientVersion: '6.19.3',
+  errorCode: 'P1001',
+  retryable: undefined
+}
+
+Node.js v24.16.0
+C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440
+          throw new PrismaClientInitializationError(error.message, this.config.clientVersion!, error.error_code)
+                ^
+
+PrismaClientInitializationError: Can't reach database server at `localhost:5434`
+
+Please make sure your database server is running at `localhost:5434`.
+    at r (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440:17)
+    at async Proxy.onModuleInit (C:\Users\mateo\Documents\Nexa CRM\packages\database\src\prisma.service.ts:20:5)
+    at async Promise.all (index 0)
+    at async callModuleInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\hooks\on-module-init.hook.js:43:5)
+    at async NestApplication.callInitHook (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application-context.js:234:13)
+    at async NestApplication.init (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:100:9)
+    at async NestApplication.listen (C:\Users\mateo\Documents\Nexa CRM\node_modules\.pnpm\@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_wv7sonobpk6cc2m3n6ev6bfqdu\node_modules\@nestjs\core\nest-application.js:170:13)
+    at async bootstrap (C:\Users\mateo\Documents\Nexa CRM\apps\api\src\main.ts:91:3) {
+  clientVersion: '6.19.3',
+  errorCode: 'P1001',
+  retryable: undefined
+}
+
+Node.js v24.16.0

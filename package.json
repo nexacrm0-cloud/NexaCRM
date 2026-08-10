@@ -1,0 +1,37 @@
+{
+  "name": "nexa-crm",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Nexa CRM - Intelligent CRM for SMBs",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "clean": "turbo clean",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "prepare": "husky",
+    "db:generate": "pnpm --filter @nexa/database db:generate",
+    "db:push": "pnpm --filter @nexa/database db:push",
+    "db:migrate": "pnpm --filter @nexa/database db:migrate",
+    "db:migrate:deploy": "pnpm --filter @nexa/database db:migrate:deploy",
+    "db:seed": "pnpm --filter @nexa/database db:seed",
+    "db:seed:agents": "pnpm --filter @nexa/database db:seed:agents",
+    "db:seed:demo": "pnpm --filter @nexa/database db:seed:demo",
+    "db:seed:roles": "pnpm --filter @nexa/database db:seed:roles",
+    "db:seed:demo-data": "pnpm --filter @nexa/database db:seed:demo-data",
+    "db:seed:support": "pnpm --filter @nexa/database db:seed:support",
+    "db:studio": "pnpm --filter @nexa/database db:studio"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.0",
+    "prettier": "^3.4.0",
+    "prettier-plugin-tailwindcss": "^0.6.0",
+    "husky": "^9.1.0",
+    "lint-staged": "^15.2.0"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

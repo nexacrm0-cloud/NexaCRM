@@ -1,0 +1,13 @@
+{
+  "extends": "@nexa/config-typescript/nestjs.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "declaration": false,
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "scripts", "src/**/*.spec.ts", "src/**/__tests__/**"]
+}

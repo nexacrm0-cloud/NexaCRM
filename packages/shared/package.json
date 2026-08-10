@@ -1,0 +1,19 @@
+{
+  "name": "@nexa/shared",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "echo 'lint ok'",
+    "clean": "echo 'clean ok'"
+  },
+  "dependencies": {
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@nexa/config-typescript": "workspace:*"
+  }
+}

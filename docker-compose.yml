@@ -1,0 +1,65 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nexa-postgres
+    environment:
+      # En dev local también forzamos password. Sin trust auth.
+      POSTGRES_USER: ${POSTGRES_USER:-nexa}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-DEV_PASSWORD_REPLACE_IN_PROD}
+      POSTGRES_DB: ${POSTGRES_DB:-nexacrm}
+    # Solo loopback. NO expuesto a LAN/internet.
+    # Puerto 55432 (libre en el host) en lugar de 5432 porque en Windows 5432 a veces
+    # está reservado por Hyper-V / SQL Server / Postgres local sin permisos del container.
+    # En prod: sacar el bind de ports y la API entra en la red de Docker.
+    ports:
+      - '127.0.0.1:55432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER:-nexa} -d $${POSTGRES_DB:-nexacrm}']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: nexa-redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: nexa-n8n
+    environment:
+      # Auth básica de n8n: en PROD debe quedar activada.
+      # En dev local se deja apagada para mantener compat con cookies de sesión guardadas.
+      # En prod: exportar N8N_BASIC_AUTH_ACTIVE=true y N8N_BASIC_AUTH_PASSWORD=<fuerte>.
+      # Cualquier acceso de browser al UI de n8n requerirá esas credenciales.
+      - N8N_BASIC_AUTH_ACTIVE=${N8N_BASIC_AUTH_ACTIVE:-false}
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER:-admin}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD:-CHANGE_ME_NOW}
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      - N8N_DIAGNOSTICS_ENABLED=false
+      - N8N_PERSONALIZATION_ENABLED=false
+    ports:
+      - '5678:5678'
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:
+  n8n_data:

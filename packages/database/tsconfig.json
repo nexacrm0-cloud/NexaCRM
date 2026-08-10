@@ -1,0 +1,11 @@
+{
+  "extends": "@nexa/config-typescript/base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "module": "commonjs",
+    "moduleResolution": "node10"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["src/seed.ts"]
+}

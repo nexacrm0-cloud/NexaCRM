@@ -1,0 +1,298 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --paper: 41 35% 89%;
+    --paper-2: 41 32% 84%;
+    --receipt: 0 0% 100%;
+    --receipt-2: 38 25% 96%;
+
+    --ink: 0 0% 10%;
+    --ink-2: 0 0% 22%;
+    --ink-3: 30 5% 38%;
+
+    --cobalt: 227 70% 46%;
+    --cobalt-soft: 227 50% 90%;
+
+    --naranja: 17 100% 56%;
+    --naranja-soft: 17 88% 92%;
+
+    --verde: 142 50% 22%;
+    --verde-soft: 142 38% 88%;
+
+    --alizarin: 4 65% 47%;
+    --alizarin-soft: 4 60% 90%;
+
+    --rule: 30 8% 18%;
+    --rule-soft: 30 8% 60%;
+
+    --background: var(--paper);
+    --foreground: var(--ink);
+    --card: var(--receipt);
+    --card-foreground: var(--ink);
+    --popover: var(--receipt);
+    --popover-foreground: var(--ink);
+    --primary: var(--ink);
+    --primary-foreground: var(--receipt);
+    --secondary: var(--receipt-2);
+    --secondary-foreground: var(--ink);
+    --muted: var(--receipt-2);
+    --muted-foreground: var(--ink-3);
+    --accent: var(--naranja-soft);
+    --accent-foreground: var(--naranja);
+    --destructive: var(--alizarin);
+    --destructive-foreground: var(--receipt);
+    --border: 30 6% 24%;
+    --input: 30 6% 24%;
+    --ring: var(--cobalt);
+    --radius: 0.125rem;
+
+    --sidebar-background: var(--paper-2);
+    --sidebar-foreground: var(--ink-2);
+    --sidebar-muted: 41 25% 80%;
+    --sidebar-accent: 0 0% 100%;
+
+    --sidebar-width: 248px;
+  }
+
+  .dark {
+    --paper: 220 14% 8%;
+    --paper-2: 220 14% 11%;
+    --receipt: 220 12% 13%;
+    --receipt-2: 220 12% 17%;
+
+    --ink: 41 35% 92%;
+    --ink-2: 41 12% 75%;
+    --ink-3: 41 8% 60%;
+
+    --cobalt: 224 80% 65%;
+    --cobalt-soft: 224 35% 22%;
+
+    --naranja: 17 100% 60%;
+    --naranja-soft: 17 60% 22%;
+
+    --verde: 142 40% 45%;
+    --verde-soft: 142 28% 20%;
+
+    --alizarin: 4 70% 60%;
+    --alizarin-soft: 4 50% 22%;
+
+    --rule: 41 12% 70%;
+    --rule-soft: 41 6% 50%;
+
+    --background: var(--paper);
+    --foreground: var(--ink);
+    --card: var(--receipt);
+    --card-foreground: var(--ink);
+    --popover: var(--receipt);
+    --popover-foreground: var(--ink);
+    --primary: var(--ink);
+    --primary-foreground: var(--paper);
+    --secondary: var(--receipt-2);
+    --secondary-foreground: var(--ink);
+    --muted: var(--receipt-2);
+    --muted-foreground: var(--ink-3);
+    --accent: var(--naranja-soft);
+    --accent-foreground: var(--naranja);
+    --destructive: var(--alizarin);
+    --destructive-foreground: var(--ink);
+    --border: 41 8% 35%;
+    --input: 41 8% 35%;
+    --ring: var(--cobalt);
+
+    --sidebar-background: 220 14% 6%;
+    --sidebar-foreground: 41 14% 80%;
+    --sidebar-muted: 220 12% 14%;
+    --sidebar-accent: 220 12% 17%;
+  }
+
+  * {
+    @apply border-border/30;
+  }
+
+  html {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings:
+      'ss01' on,
+      'cv11' on;
+  }
+
+  body {
+    @apply bg-paper text-ink font-sans antialiased;
+    background-image: radial-gradient(circle, hsl(var(--ink) / 0.06) 1px, transparent 1px);
+    background-size: 22px 22px;
+    background-position: 0 0;
+  }
+
+  .dark body {
+    background-image: radial-gradient(circle, hsl(var(--ink) / 0.07) 1px, transparent 1px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0ms !important;
+      transition-duration: 0ms !important;
+    }
+  }
+
+  ::selection {
+    background: hsl(var(--naranja) / 0.95);
+    color: hsl(var(--paper));
+  }
+
+  table {
+    border-collapse: collapse;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--paper-2));
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--ink) / 0.18);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--ink) / 0.32);
+  }
+
+  h1 {
+    @apply font-display;
+    font-feature-settings:
+      'ss01' on,
+      'cv11' on;
+  }
+}
+
+@layer components {
+  .font-display {
+    font-family: var(--font-display), 'Fraunces', Georgia, serif;
+  }
+  .font-mono {
+    font-family: var(--font-mono), ui-monospace, 'SFMono-Regular', monospace;
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings:
+      'tnum' on,
+      'lnum' on;
+  }
+
+  .eyebrow {
+    @apply text-ink-2 inline-flex items-center gap-2 text-[11px] font-semibold uppercase;
+    letter-spacing: 0.16em;
+  }
+  .eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: hsl(var(--naranja));
+  }
+
+  .rule {
+    @apply h-px w-full;
+    background: hsl(var(--ink) / 0.18);
+  }
+  .rule-strong {
+    @apply h-px w-full;
+    background: hsl(var(--ink) / 0.55);
+  }
+
+  .numeral {
+    font-family: var(--font-display), 'Fraunces', Georgia, serif;
+    font-variant-numeric: tabular-nums lining-nums;
+    font-feature-settings:
+      'tnum' on,
+      'lnum' on,
+      'ss01' on;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  .card-recibo {
+    @apply bg-receipt text-ink;
+    border: 1px solid hsl(var(--ink) / 0.14);
+    border-radius: 2px;
+  }
+
+  .stamped {
+    animation: stamp-in 320ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  @keyframes stamp-in {
+    0% {
+      opacity: 0;
+      transform: rotate(-3deg) scale(1.18);
+    }
+    60% {
+      opacity: 1;
+      transform: rotate(0.6deg) scale(0.98);
+    }
+    100% {
+      opacity: 1;
+      transform: rotate(-1deg) scale(1);
+    }
+  }
+
+  .fade-up {
+    animation: fade-up 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+@layer utilities {
+  .text-ink {
+    color: hsl(var(--ink));
+  }
+  .text-ink-2 {
+    color: hsl(var(--ink-2));
+  }
+  .text-ink-3 {
+    color: hsl(var(--ink-3));
+  }
+  .bg-paper {
+    background-color: hsl(var(--paper));
+  }
+  .bg-paper-2 {
+    background-color: hsl(var(--paper-2));
+  }
+  .bg-receipt {
+    background-color: hsl(var(--receipt));
+  }
+  .border-ink\/8 {
+    border-color: hsl(var(--ink) / 0.08);
+  }
+  .border-ink\/14 {
+    border-color: hsl(var(--ink) / 0.14);
+  }
+  .border-ink\/22 {
+    border-color: hsl(var(--ink) / 0.22);
+  }
+  .border-ink\/40 {
+    border-color: hsl(var(--ink) / 0.4);
+  }
+  .shadow-recibo {
+    box-shadow:
+      0 1px 0 hsl(var(--ink) / 0.06),
+      0 14px 30px -22px hsl(var(--ink) / 0.25);
+  }
+}

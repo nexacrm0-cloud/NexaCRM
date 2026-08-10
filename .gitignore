@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.next/
+*.log
+.env
+.env.local
+.env.*.local
+.DS_Store
+coverage/
+*.tsbuildinfo
+.turbo/
+# Local n8n workflow exports tend to contain inlined secrets (agent/internal
+# API keys, LLM provider keys). They should never be committed; deploy them
+# as separate environment variables / secrets in the n8n instance instead.
+n8n-workflows/

@@ -1,0 +1,196 @@
+name: CD
+
+# CD pipeline: build & push Docker images a GHCR tras tag v* (release) o push a main.
+# Deploy por SSH al VPS es opcional y solo corre si todos los secrets SSH_* estan configurados.
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Ref a deployar (branch, tag o SHA)'
+        required: false
+        default: ''
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  # --- Build & push API ---------------------------------------------------
+  build-api:
+    name: Build & push API image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/api
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,prefix=sha-,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./apps/api/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # --- Build & push Web ---------------------------------------------------
+  build-web:
+    name: Build & push Web image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/web
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,prefix=sha-,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./apps/web/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            NEXT_PUBLIC_API_URL=/api/v1
+            NEXT_PUBLIC_SENTRY_DSN=${{ secrets.SENTRY_DSN }}
+            NEXT_PUBLIC_SENTRY_HOST=${{ vars.SENTRY_HOST || 'sentry.io' }}
+            NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE=0.1
+            SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
+            SENTRY_RELEASE=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # --- Production deploy via SSH (optional) ------------------------------
+  # Solo corre si SSH_HOST, SSH_USER y SSH_PRIVATE_KEY estan configurados en
+  # el repo como Actions secrets. Si no estan, este job se saltea silenciosamente.
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    needs: [build-api, build-web]
+    if: ${{ github.event_name == 'push' && github.ref_type == 'tag' && vars.ENABLE_SSH_DEPLOY == 'true' }}
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+
+      - name: Compose deploy bundle
+        run: |
+          mkdir bundle
+          cp docker-compose.prod.yml bundle/
+          cp docker/nginx.conf bundle/
+          mkdir bundle/docker
+          cp -r docker/* bundle/docker/ || true
+          tar -czf deploy.tar.gz -C bundle .
+
+      - name: Copy bundle to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          source: deploy.tar.gz
+          target: /tmp/nexa-deploy
+
+      - name: Run deploy on VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: |
+            set -e
+            cd /tmp/nexa-deploy
+            tar -xzf deploy.tar.gz -C /opt/nexa
+            cd /opt/nexa
+            # Auth a GHCR con el PAT almacenado como secret
+            echo "${{ secrets.GHCR_PULL_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USER }} --password-stdin
+            docker compose -f docker-compose.prod.yml pull api web
+            docker compose -f docker-compose.prod.yml up -d --force-recreate api web nginx
+            docker image prune -f
+            rm -rf /tmp/nexa-deploy
+            echo "Deploy de Nexa CRM completado en ${{ github.ref }}"
+
+      - name: Notify on failure
+        if: failure()
+        uses: appleboy/telegram-action@v1.0.3
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            🚨 Nexa CRM deploy FALLIDO en ${{ github.ref }}
+            Workflow: ${{ github.run_id }}
+            Ver: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        continue-on-error: true
+
+  # --- Release notes (auto-generated, optional) --------------------------
+  release-notes:
+    name: Generate release notes
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' && github.ref_type == 'tag' }}
+    needs: [build-api, build-web]
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Generate notes
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
