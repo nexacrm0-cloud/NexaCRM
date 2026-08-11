@@ -65,7 +65,6 @@ COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=prod-deps /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=prod-deps /app/packages/database/node_modules ./packages/database/node_modules
 COPY --from=prod-deps /app/packages/shared/node_modules ./packages/shared/node_modules
-COPY --from=prod-deps /app/packages/domain/node_modules ./packages/domain/node_modules
 
 EXPOSE 4000
 CMD ["node", "apps/api/dist/main"]
