@@ -67,4 +67,8 @@ COPY --from=prod-deps /app/packages/database/node_modules ./packages/database/no
 COPY --from=prod-deps /app/packages/shared/node_modules ./packages/shared/node_modules
 
 EXPOSE 4000
-CMD ["node", "apps/api/dist/main"]
+# Run migrations before booting so a fresh database (Render Postgres) is
+# schema-complete on first deploy. prisma migrate deploy is idempotent, so
+# repeated starts are a no-op. The RLS migration also creates nexa_app /
+# nexa_admin (needs a role that can CREATE ROLE, i.e. the DB owner).
+CMD ["sh", "-c", "prisma migrate deploy --schema=packages/database/prisma/schema.prisma && node apps/api/dist/main"]
