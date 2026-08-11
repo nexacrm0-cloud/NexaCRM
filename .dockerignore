@@ -1,0 +1,20 @@
+# Keep the build context small and, more importantly, never let `COPY . .`
+# overwrite the Linux node_modules copied from the deps/prod-deps stages with
+# local, platform-specific ones (or with nothing on a clean Git checkout).
+#
+# NOTE: package.json, pnpm-workspace.yaml, pnpm-lock.yaml and .npmrc are NOT
+# ignored — the deps stage explicitly COPYs them and the build would fail.
+node_modules
+**/node_modules
+**/.turbo
+**/.next
+**/dist
+**/coverage
+.git
+*.log
+*.err
+*.tsbuildinfo
+.env
+.env.*
+uploads
+n8n-workflows
