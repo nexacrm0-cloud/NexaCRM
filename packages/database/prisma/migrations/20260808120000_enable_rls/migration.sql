@@ -91,6 +91,13 @@ END$$;
 ALTER ROLE nexa_app NOBYPASSRLS;
 ALTER ROLE nexa_admin BYPASSRLS;
 
+-- On Render there is a single DATABASE_URL (the DB owner) for both migrations
+-- and the API process. For the TenantMiddleware to SET ROLE nexa_app at
+-- runtime (and support tooling to SET ROLE nexa_admin), the DB owner must be a
+-- member of these roles. No-op if the owner is already a superuser.
+GRANT nexa_app TO nexa_admin;
+GRANT nexa_app, nexa_admin TO CURRENT_USER;
+
 -- ---------------------------------------------------------------------------
 -- 2. ENABLE ROW LEVEL SECURITY + FORCE on tenant-scoped business tables.
 --    Auth/setup tables (users, organizations, invitations, password_reset_*,

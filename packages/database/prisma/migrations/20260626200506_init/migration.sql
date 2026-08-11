@@ -1,5 +1,8 @@
+-- CreateSchema
+CREATE SCHEMA IF NOT EXISTS "public";
+
 -- CreateEnum
-CREATE TYPE "UserRole" AS ENUM ('OWNER', 'ADMIN', 'MEMBER', 'VIEWER');
+CREATE TYPE "UserRole" AS ENUM ('OWNER', 'ADMIN', 'MEMBER', 'VIEWER', 'SUPER_ADMIN');
 
 -- CreateEnum
 CREATE TYPE "DealStatus" AS ENUM ('LEAD', 'CONTACTED', 'MEETING', 'PROPOSAL', 'NEGOTIATION', 'WON', 'LOST');
@@ -14,15 +17,41 @@ CREATE TYPE "TaskStatus" AS ENUM ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCEL
 CREATE TYPE "QuoteStatus" AS ENUM ('DRAFT', 'SENT', 'ACCEPTED', 'REJECTED', 'EXPIRED');
 
 -- CreateEnum
-CREATE TYPE "ActivityType" AS ENUM ('CREATED', 'UPDATED', 'DELETED', 'NOTE_ADDED', 'FILE_ATTACHED', 'STATUS_CHANGED', 'EMAIL_SENT', 'CALL_MADE', 'MEETING_SCHEDULED', 'QUOTE_GENERATED', 'DEAL_WON', 'DEAL_LOST');
+CREATE TYPE "InvitationStatus" AS ENUM ('PENDING', 'ACCEPTED', 'EXPIRED', 'REVOKED');
+
+-- CreateEnum
+CREATE TYPE "ActivityType" AS ENUM ('CREATED', 'UPDATED', 'DELETED', 'NOTE_ADDED', 'FILE_ATTACHED', 'STATUS_CHANGED', 'EMAIL_SENT', 'CALL_MADE', 'MEETING_SCHEDULED', 'QUOTE_GENERATED', 'DEAL_WON', 'DEAL_LOST', 'INVOICE_ISSUED');
+
+-- CreateEnum
+CREATE TYPE "InvoiceStatus" AS ENUM ('DRAFT', 'ISSUED', 'PAID', 'PARTIALLY_PAID', 'OVERDUE', 'CANCELLED');
+
+-- CreateEnum
+CREATE TYPE "InvoiceType" AS ENUM ('A', 'B', 'C', 'E', 'M');
+
+-- CreateEnum
+CREATE TYPE "EventType" AS ENUM ('MEETING', 'CALL', 'TASK', 'REMINDER', 'OTHER');
+
+-- CreateEnum
+CREATE TYPE "CompanySize" AS ENUM ('SME', 'ENTERPRISE');
+
+-- CreateEnum
+CREATE TYPE "SupportStatus" AS ENUM ('ACTIVE', 'EXPIRED', 'PENDING_RENEWAL', 'SUSPENDED');
+
+-- CreateEnum
+CREATE TYPE "StockMovementType" AS ENUM ('IN', 'OUT', 'ADJUST', 'RESERVE', 'RELEASE');
 
 -- CreateTable
 CREATE TABLE "organizations" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
-    "logo" TEXT,
     "plan" TEXT NOT NULL DEFAULT 'free',
+    "logo" TEXT,
+    "companySize" "CompanySize" NOT NULL DEFAULT 'SME',
+    "supportStatus" "SupportStatus" NOT NULL DEFAULT 'ACTIVE',
+    "currency" TEXT NOT NULL DEFAULT 'ARS',
+    "locale" TEXT NOT NULL DEFAULT 'es-AR',
+    "onboardingCompletedAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -40,7 +69,10 @@ CREATE TABLE "users" (
     "phone" TEXT,
     "role" "UserRole" NOT NULL DEFAULT 'MEMBER',
     "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "emailVerifiedAt" TIMESTAMP(3),
     "refreshToken" TEXT,
+    "twoFactorSecret" TEXT,
+    "isTwoFactorEnabled" BOOLEAN NOT NULL DEFAULT false,
     "lastLoginAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -115,7 +147,7 @@ CREATE TABLE "tasks" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "organizationId" TEXT NOT NULL,
-    "createdById" TEXT NOT NULL,
+    "createdById" TEXT,
     "assignedTo" TEXT,
     "clientId" TEXT,
     "dealId" TEXT,
@@ -146,7 +178,7 @@ CREATE TABLE "quotes" (
     "organizationId" TEXT NOT NULL,
     "clientId" TEXT NOT NULL,
     "dealId" TEXT,
-    "createdById" TEXT NOT NULL,
+    "createdById" TEXT,
 
     CONSTRAINT "quotes_pkey" PRIMARY KEY ("id")
 );
@@ -157,7 +189,9 @@ CREATE TABLE "quote_items" (
     "description" TEXT NOT NULL,
     "quantity" DECIMAL(65,30) NOT NULL DEFAULT 1,
     "unitPrice" DECIMAL(65,30) NOT NULL DEFAULT 0,
+    "discount" DECIMAL(65,30) NOT NULL DEFAULT 0,
     "total" DECIMAL(65,30) NOT NULL DEFAULT 0,
+    "productVariantId" TEXT,
     "quoteId" TEXT NOT NULL,
 
     CONSTRAINT "quote_items_pkey" PRIMARY KEY ("id")
@@ -224,12 +258,37 @@ CREATE TABLE "workflows" (
     "actions" JSONB NOT NULL,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "lastRunAt" TIMESTAMP(3),
+    "sourceTemplateSlug" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "organizationId" TEXT NOT NULL,
     "createdById" TEXT NOT NULL,
 
     CONSTRAINT "workflows_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "workflow_templates" (
+    "id" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "shortDescription" TEXT NOT NULL,
+    "longDescription" TEXT,
+    "category" TEXT NOT NULL,
+    "icon" TEXT,
+    "trigger" TEXT NOT NULL,
+    "plan" TEXT NOT NULL DEFAULT 'starter',
+    "priceCents" INTEGER NOT NULL DEFAULT 0,
+    "paramSchema" JSONB NOT NULL,
+    "defaultConfig" JSONB NOT NULL,
+    "isPrivate" BOOLEAN NOT NULL DEFAULT false,
+    "isFeatured" BOOLEAN NOT NULL DEFAULT false,
+    "isPublished" BOOLEAN NOT NULL DEFAULT true,
+    "installCount" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "workflow_templates_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -246,6 +305,66 @@ CREATE TABLE "workflow_execution_logs" (
     "workflowId" TEXT NOT NULL,
 
     CONSTRAINT "workflow_execution_logs_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "agents" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "displayName" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "icon" TEXT,
+    "webhookUrl" TEXT NOT NULL,
+    "workflowUrl" TEXT,
+    "requiredPlan" TEXT NOT NULL DEFAULT 'pro',
+    "features" JSONB NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "agents_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "agent_subscriptions" (
+    "id" TEXT NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "activatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "deactivatedAt" TIMESTAMP(3),
+    "config" JSONB,
+    "apiKey" TEXT NOT NULL,
+    "organizationId" TEXT NOT NULL,
+    "agentId" TEXT NOT NULL,
+
+    CONSTRAINT "agent_subscriptions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "agent_executions" (
+    "id" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'PENDING',
+    "input" JSONB NOT NULL,
+    "output" JSONB,
+    "error" TEXT,
+    "durationMs" INTEGER,
+    "startedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "completedAt" TIMESTAMP(3),
+    "organizationId" TEXT NOT NULL,
+    "agentId" TEXT NOT NULL,
+
+    CONSTRAINT "agent_executions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "whatsapp_processed_messages" (
+    "id" TEXT NOT NULL,
+    "messageId" TEXT NOT NULL,
+    "organizationId" TEXT,
+    "from" TEXT,
+    "processedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "whatsapp_processed_messages_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -337,6 +456,102 @@ CREATE TABLE "notifications" (
 );
 
 -- CreateTable
+CREATE TABLE "invitations" (
+    "id" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "role" "UserRole" NOT NULL DEFAULT 'MEMBER',
+    "token" TEXT NOT NULL,
+    "status" "InvitationStatus" NOT NULL DEFAULT 'PENDING',
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "acceptedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "organizationId" TEXT NOT NULL,
+    "invitedById" TEXT NOT NULL,
+
+    CONSTRAINT "invitations_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "api_keys" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "key" TEXT NOT NULL,
+    "prefix" TEXT NOT NULL,
+    "lastUsedAt" TIMESTAMP(3),
+    "expiresAt" TIMESTAMP(3),
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "organizationId" TEXT NOT NULL,
+    "createdById" TEXT NOT NULL,
+
+    CONSTRAINT "api_keys_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "password_reset_tokens" (
+    "id" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "token" TEXT NOT NULL,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "usedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "password_reset_tokens_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "email_verification_tokens" (
+    "id" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "token" TEXT NOT NULL,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "usedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "email_verification_tokens_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "automation_subscriptions" (
+    "id" TEXT NOT NULL,
+    "organizationId" TEXT NOT NULL,
+    "templateSlug" TEXT NOT NULL,
+    "workflowId" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'trialing',
+    "kind" TEXT NOT NULL DEFAULT 'trial',
+    "monthlyPriceCents" INTEGER NOT NULL DEFAULT 0,
+    "trialDays" INTEGER NOT NULL DEFAULT 14,
+    "billingExternalId" TEXT,
+    "paidUntil" TIMESTAMP(3),
+    "startedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "billingCycleEndsAt" TIMESTAMP(3),
+    "cancelledAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "providerOrganizationId" TEXT NOT NULL,
+
+    CONSTRAINT "automation_subscriptions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "otp_codes" (
+    "id" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "code" TEXT NOT NULL,
+    "purpose" TEXT NOT NULL DEFAULT 'login',
+    "attempts" INTEGER NOT NULL DEFAULT 0,
+    "consumedAt" TIMESTAMP(3),
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "userId" TEXT,
+    "organizationId" TEXT,
+
+    CONSTRAINT "otp_codes_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "dashboard_projections" (
     "id" TEXT NOT NULL,
     "monthlySales" DECIMAL(65,30) NOT NULL DEFAULT 0,
@@ -350,8 +565,155 @@ CREATE TABLE "dashboard_projections" (
     CONSTRAINT "dashboard_projections_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "events" (
+    "id" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "type" "EventType" NOT NULL DEFAULT 'MEETING',
+    "startDate" TIMESTAMP(3) NOT NULL,
+    "endDate" TIMESTAMP(3) NOT NULL,
+    "allDay" BOOLEAN NOT NULL DEFAULT false,
+    "color" TEXT,
+    "location" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "organizationId" TEXT NOT NULL,
+    "createdById" TEXT NOT NULL,
+    "clientId" TEXT,
+    "dealId" TEXT,
+    "taskId" TEXT,
+    "isRecurring" BOOLEAN NOT NULL DEFAULT false,
+    "recurrenceRule" TEXT,
+    "recurringEventId" TEXT,
+    "recurrenceException" TEXT,
+
+    CONSTRAINT "events_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "invoices" (
+    "id" TEXT NOT NULL,
+    "title" TEXT,
+    "number" TEXT NOT NULL,
+    "invoiceType" "InvoiceType" NOT NULL DEFAULT 'B',
+    "pointOfSale" TEXT NOT NULL DEFAULT '0001',
+    "status" "InvoiceStatus" NOT NULL DEFAULT 'DRAFT',
+    "subtotal" DECIMAL(65,30) NOT NULL DEFAULT 0,
+    "taxRate" DECIMAL(65,30) NOT NULL DEFAULT 0,
+    "taxAmount" DECIMAL(65,30) NOT NULL DEFAULT 0,
+    "total" DECIMAL(65,30) NOT NULL DEFAULT 0,
+    "notes" TEXT,
+    "terms" TEXT,
+    "cuit" TEXT,
+    "ivaCondition" TEXT,
+    "cae" TEXT,
+    "caeExpiresAt" TIMESTAMP(3),
+    "issuedAt" TIMESTAMP(3),
+    "paidAt" TIMESTAMP(3),
+    "cancelledAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "organizationId" TEXT NOT NULL,
+    "clientId" TEXT NOT NULL,
+    "quoteId" TEXT,
+    "createdById" TEXT NOT NULL,
+
+    CONSTRAINT "invoices_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "invoice_items" (
+    "id" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "quantity" DECIMAL(65,30) NOT NULL DEFAULT 1,
+    "unitPrice" DECIMAL(65,30) NOT NULL DEFAULT 0,
+    "discount" DECIMAL(65,30) NOT NULL DEFAULT 0,
+    "total" DECIMAL(65,30) NOT NULL DEFAULT 0,
+    "productVariantId" TEXT,
+    "invoiceId" TEXT NOT NULL,
+
+    CONSTRAINT "invoice_items_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "categories" (
+    "id" TEXT NOT NULL,
+    "organizationId" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
+    "color" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "categories_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "products" (
+    "id" TEXT NOT NULL,
+    "organizationId" TEXT NOT NULL,
+    "sku" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "imageUrl" TEXT,
+    "price" DECIMAL(65,30) NOT NULL DEFAULT 0,
+    "cost" DECIMAL(65,30) NOT NULL DEFAULT 0,
+    "unit" TEXT,
+    "trackStock" BOOLEAN NOT NULL DEFAULT true,
+    "stock" INTEGER NOT NULL DEFAULT 0,
+    "minStock" INTEGER,
+    "maxStock" INTEGER,
+    "categoryId" TEXT,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "products_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "product_variants" (
+    "id" TEXT NOT NULL,
+    "productId" TEXT NOT NULL,
+    "sku" TEXT,
+    "name" TEXT,
+    "attributes" JSONB,
+    "price" DECIMAL(65,30) DEFAULT 0,
+    "stock" INTEGER NOT NULL DEFAULT 0,
+    "reservedStock" INTEGER NOT NULL DEFAULT 0,
+    "minStock" INTEGER,
+    "maxStock" INTEGER,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "product_variants_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "stock_movements" (
+    "id" TEXT NOT NULL,
+    "organizationId" TEXT NOT NULL,
+    "productId" TEXT NOT NULL,
+    "productVariantId" TEXT,
+    "type" "StockMovementType" NOT NULL,
+    "quantity" INTEGER NOT NULL,
+    "reason" TEXT,
+    "reference" TEXT,
+    "relatedInvoiceId" TEXT,
+    "relatedQuoteId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdById" TEXT,
+
+    CONSTRAINT "stock_movements_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "organizations_slug_key" ON "organizations"("slug");
+
+-- CreateIndex
+CREATE INDEX "organizations_slug_idx" ON "organizations"("slug");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
@@ -432,6 +794,9 @@ CREATE INDEX "quotes_organizationId_status_idx" ON "quotes"("organizationId", "s
 CREATE INDEX "quote_items_quoteId_idx" ON "quote_items"("quoteId");
 
 -- CreateIndex
+CREATE INDEX "quote_items_productVariantId_idx" ON "quote_items"("productVariantId");
+
+-- CreateIndex
 CREATE INDEX "activity_logs_organizationId_createdAt_idx" ON "activity_logs"("organizationId", "createdAt");
 
 -- CreateIndex
@@ -471,6 +836,15 @@ CREATE INDEX "workflows_organizationId_idx" ON "workflows"("organizationId");
 CREATE INDEX "workflows_organizationId_isActive_idx" ON "workflows"("organizationId", "isActive");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "workflow_templates_slug_key" ON "workflow_templates"("slug");
+
+-- CreateIndex
+CREATE INDEX "workflow_templates_category_idx" ON "workflow_templates"("category");
+
+-- CreateIndex
+CREATE INDEX "workflow_templates_isPublished_isFeatured_idx" ON "workflow_templates"("isPublished", "isFeatured");
+
+-- CreateIndex
 CREATE INDEX "workflow_execution_logs_workflowId_idx" ON "workflow_execution_logs"("workflowId");
 
 -- CreateIndex
@@ -478,6 +852,24 @@ CREATE INDEX "workflow_execution_logs_organizationId_startedAt_idx" ON "workflow
 
 -- CreateIndex
 CREATE INDEX "workflow_execution_logs_status_idx" ON "workflow_execution_logs"("status");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "agent_subscriptions_apiKey_key" ON "agent_subscriptions"("apiKey");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "agent_subscriptions_organizationId_agentId_key" ON "agent_subscriptions"("organizationId", "agentId");
+
+-- CreateIndex
+CREATE INDEX "agent_executions_agentId_startedAt_idx" ON "agent_executions"("agentId", "startedAt");
+
+-- CreateIndex
+CREATE INDEX "agent_executions_organizationId_startedAt_idx" ON "agent_executions"("organizationId", "startedAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "whatsapp_processed_messages_messageId_key" ON "whatsapp_processed_messages"("messageId");
+
+-- CreateIndex
+CREATE INDEX "whatsapp_processed_messages_processedAt_idx" ON "whatsapp_processed_messages"("processedAt");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "subscriptions_organizationId_key" ON "subscriptions"("organizationId");
@@ -510,7 +902,133 @@ CREATE INDEX "notifications_userId_isRead_idx" ON "notifications"("userId", "isR
 CREATE INDEX "notifications_createdAt_idx" ON "notifications"("createdAt");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "invitations_token_key" ON "invitations"("token");
+
+-- CreateIndex
+CREATE INDEX "invitations_organizationId_idx" ON "invitations"("organizationId");
+
+-- CreateIndex
+CREATE INDEX "invitations_email_idx" ON "invitations"("email");
+
+-- CreateIndex
+CREATE INDEX "invitations_token_idx" ON "invitations"("token");
+
+-- CreateIndex
+CREATE INDEX "invitations_status_idx" ON "invitations"("status");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "api_keys_key_key" ON "api_keys"("key");
+
+-- CreateIndex
+CREATE INDEX "api_keys_organizationId_idx" ON "api_keys"("organizationId");
+
+-- CreateIndex
+CREATE INDEX "api_keys_key_idx" ON "api_keys"("key");
+
+-- CreateIndex
+CREATE INDEX "api_keys_prefix_idx" ON "api_keys"("prefix");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "password_reset_tokens_token_key" ON "password_reset_tokens"("token");
+
+-- CreateIndex
+CREATE INDEX "password_reset_tokens_email_idx" ON "password_reset_tokens"("email");
+
+-- CreateIndex
+CREATE INDEX "password_reset_tokens_token_idx" ON "password_reset_tokens"("token");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "email_verification_tokens_token_key" ON "email_verification_tokens"("token");
+
+-- CreateIndex
+CREATE INDEX "email_verification_tokens_email_idx" ON "email_verification_tokens"("email");
+
+-- CreateIndex
+CREATE INDEX "email_verification_tokens_token_idx" ON "email_verification_tokens"("token");
+
+-- CreateIndex
+CREATE INDEX "automation_subscriptions_organizationId_idx" ON "automation_subscriptions"("organizationId");
+
+-- CreateIndex
+CREATE INDEX "automation_subscriptions_providerOrganizationId_idx" ON "automation_subscriptions"("providerOrganizationId");
+
+-- CreateIndex
+CREATE INDEX "automation_subscriptions_status_kind_idx" ON "automation_subscriptions"("status", "kind");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "automation_subscriptions_organizationId_templateSlug_key" ON "automation_subscriptions"("organizationId", "templateSlug");
+
+-- CreateIndex
+CREATE INDEX "otp_codes_email_purpose_idx" ON "otp_codes"("email", "purpose");
+
+-- CreateIndex
+CREATE INDEX "otp_codes_expiresAt_idx" ON "otp_codes"("expiresAt");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "dashboard_projections_organizationId_key" ON "dashboard_projections"("organizationId");
+
+-- CreateIndex
+CREATE INDEX "events_organizationId_idx" ON "events"("organizationId");
+
+-- CreateIndex
+CREATE INDEX "events_startDate_idx" ON "events"("startDate");
+
+-- CreateIndex
+CREATE INDEX "events_organizationId_startDate_idx" ON "events"("organizationId", "startDate");
+
+-- CreateIndex
+CREATE INDEX "invoices_organizationId_idx" ON "invoices"("organizationId");
+
+-- CreateIndex
+CREATE INDEX "invoices_organizationId_status_idx" ON "invoices"("organizationId", "status");
+
+-- CreateIndex
+CREATE INDEX "invoices_clientId_idx" ON "invoices"("clientId");
+
+-- CreateIndex
+CREATE INDEX "invoices_quoteId_idx" ON "invoices"("quoteId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "invoices_organizationId_number_key" ON "invoices"("organizationId", "number");
+
+-- CreateIndex
+CREATE INDEX "invoice_items_invoiceId_idx" ON "invoice_items"("invoiceId");
+
+-- CreateIndex
+CREATE INDEX "invoice_items_productVariantId_idx" ON "invoice_items"("productVariantId");
+
+-- CreateIndex
+CREATE INDEX "categories_organizationId_idx" ON "categories"("organizationId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "categories_organizationId_slug_key" ON "categories"("organizationId", "slug");
+
+-- CreateIndex
+CREATE INDEX "products_organizationId_idx" ON "products"("organizationId");
+
+-- CreateIndex
+CREATE INDEX "products_organizationId_isActive_idx" ON "products"("organizationId", "isActive");
+
+-- CreateIndex
+CREATE INDEX "products_organizationId_categoryId_idx" ON "products"("organizationId", "categoryId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "products_organizationId_sku_key" ON "products"("organizationId", "sku");
+
+-- CreateIndex
+CREATE INDEX "product_variants_productId_idx" ON "product_variants"("productId");
+
+-- CreateIndex
+CREATE INDEX "stock_movements_organizationId_createdAt_idx" ON "stock_movements"("organizationId", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "stock_movements_productId_idx" ON "stock_movements"("productId");
+
+-- CreateIndex
+CREATE INDEX "stock_movements_productVariantId_idx" ON "stock_movements"("productVariantId");
+
+-- CreateIndex
+CREATE INDEX "stock_movements_relatedInvoiceId_idx" ON "stock_movements"("relatedInvoiceId");
 
 -- AddForeignKey
 ALTER TABLE "users" ADD CONSTRAINT "users_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -537,7 +1055,7 @@ ALTER TABLE "deals" ADD CONSTRAINT "deals_assignedTo_fkey" FOREIGN KEY ("assigne
 ALTER TABLE "tasks" ADD CONSTRAINT "tasks_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "tasks" ADD CONSTRAINT "tasks_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "tasks" ADD CONSTRAINT "tasks_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "tasks" ADD CONSTRAINT "tasks_assignedTo_fkey" FOREIGN KEY ("assignedTo") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -558,7 +1076,10 @@ ALTER TABLE "quotes" ADD CONSTRAINT "quotes_clientId_fkey" FOREIGN KEY ("clientI
 ALTER TABLE "quotes" ADD CONSTRAINT "quotes_dealId_fkey" FOREIGN KEY ("dealId") REFERENCES "deals"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "quotes" ADD CONSTRAINT "quotes_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "quotes" ADD CONSTRAINT "quotes_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "quote_items" ADD CONSTRAINT "quote_items_productVariantId_fkey" FOREIGN KEY ("productVariantId") REFERENCES "product_variants"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "quote_items" ADD CONSTRAINT "quote_items_quoteId_fkey" FOREIGN KEY ("quoteId") REFERENCES "quotes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -603,6 +1124,18 @@ ALTER TABLE "workflow_execution_logs" ADD CONSTRAINT "workflow_execution_logs_or
 ALTER TABLE "workflow_execution_logs" ADD CONSTRAINT "workflow_execution_logs_workflowId_fkey" FOREIGN KEY ("workflowId") REFERENCES "workflows"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "agent_subscriptions" ADD CONSTRAINT "agent_subscriptions_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "agent_subscriptions" ADD CONSTRAINT "agent_subscriptions_agentId_fkey" FOREIGN KEY ("agentId") REFERENCES "agents"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "agent_executions" ADD CONSTRAINT "agent_executions_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "agent_executions" ADD CONSTRAINT "agent_executions_agentId_fkey" FOREIGN KEY ("agentId") REFERENCES "agents"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "subscriptions" ADD CONSTRAINT "subscriptions_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -627,4 +1160,88 @@ ALTER TABLE "notifications" ADD CONSTRAINT "notifications_organizationId_fkey" F
 ALTER TABLE "notifications" ADD CONSTRAINT "notifications_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "invitations" ADD CONSTRAINT "invitations_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "invitations" ADD CONSTRAINT "invitations_invitedById_fkey" FOREIGN KEY ("invitedById") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "api_keys" ADD CONSTRAINT "api_keys_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "api_keys" ADD CONSTRAINT "api_keys_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "automation_subscriptions" ADD CONSTRAINT "automation_subscriptions_providerOrganizationId_fkey" FOREIGN KEY ("providerOrganizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "automation_subscriptions" ADD CONSTRAINT "automation_subscriptions_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "automation_subscriptions" ADD CONSTRAINT "automation_subscriptions_templateSlug_fkey" FOREIGN KEY ("templateSlug") REFERENCES "workflow_templates"("slug") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "otp_codes" ADD CONSTRAINT "otp_codes_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "otp_codes" ADD CONSTRAINT "otp_codes_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "dashboard_projections" ADD CONSTRAINT "dashboard_projections_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "events" ADD CONSTRAINT "events_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "events" ADD CONSTRAINT "events_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "events" ADD CONSTRAINT "events_clientId_fkey" FOREIGN KEY ("clientId") REFERENCES "clients"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "events" ADD CONSTRAINT "events_dealId_fkey" FOREIGN KEY ("dealId") REFERENCES "deals"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "events" ADD CONSTRAINT "events_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "tasks"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "invoices" ADD CONSTRAINT "invoices_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "invoices" ADD CONSTRAINT "invoices_clientId_fkey" FOREIGN KEY ("clientId") REFERENCES "clients"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "invoices" ADD CONSTRAINT "invoices_quoteId_fkey" FOREIGN KEY ("quoteId") REFERENCES "quotes"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "invoices" ADD CONSTRAINT "invoices_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "invoice_items" ADD CONSTRAINT "invoice_items_productVariantId_fkey" FOREIGN KEY ("productVariantId") REFERENCES "product_variants"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "invoice_items" ADD CONSTRAINT "invoice_items_invoiceId_fkey" FOREIGN KEY ("invoiceId") REFERENCES "invoices"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "categories" ADD CONSTRAINT "categories_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "products" ADD CONSTRAINT "products_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "products" ADD CONSTRAINT "products_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "categories"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "product_variants" ADD CONSTRAINT "product_variants_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "stock_movements" ADD CONSTRAINT "stock_movements_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "stock_movements" ADD CONSTRAINT "stock_movements_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "stock_movements" ADD CONSTRAINT "stock_movements_productVariantId_fkey" FOREIGN KEY ("productVariantId") REFERENCES "product_variants"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "stock_movements" ADD CONSTRAINT "stock_movements_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;

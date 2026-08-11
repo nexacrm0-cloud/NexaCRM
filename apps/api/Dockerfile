@@ -71,4 +71,10 @@ EXPOSE 4000
 # schema-complete on first deploy. prisma migrate deploy is idempotent, so
 # repeated starts are a no-op. The RLS migration also creates nexa_app /
 # nexa_admin (needs a role that can CREATE ROLE, i.e. the DB owner).
-CMD ["sh", "-c", "prisma migrate deploy --schema=packages/database/prisma/schema.prisma && node apps/api/dist/main"]
+# On a fresh DB where the migration history is broken (P3005/P3009), migrate
+# deploy fails; if PRISMA_BOOTSTRAP_RESET=true we reset (safe: DB is empty at
+# bootstrap) and re-apply the full chain from scratch. On healthy deploys
+# migrate deploy succeeds and the reset branch never runs, so the flag can be
+# left in place — remove it once the database is up if you want zero data loss
+# on a future failed migration.
+CMD ["sh", "-c", "set -e; S=packages/database/prisma/schema.prisma; if prisma migrate deploy --schema=$S; then :; elif [ \"$PRISMA_BOOTSTRAP_RESET\" = \"true\" ]; then echo 'Migration failed, running one-time bootstrap reset (PRISMA_BOOTSTRAP_RESET=true)'; prisma migrate reset --force --skip-seed --schema=$S; prisma migrate deploy --schema=$S; else exit 1; fi; node apps/api/dist/main"]
