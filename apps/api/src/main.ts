@@ -231,7 +231,10 @@ async function bootstrap() {
     Sentry.setupExpressErrorHandler(app as any);
   }
 
-  const port = process.env.API_PORT || 4000;
+  // Render injects PORT (default 10000) and expects the app to listen there;
+  // API_PORT is used locally. Prefer PORT so the internal health check and
+  // the public route hit the same listener.
+  const port = process.env.PORT || process.env.API_PORT || 4000;
   await app.listen(port);
   logger.log(`Nexa CRM API running on http://localhost:${port}/api/v1`);
 }
