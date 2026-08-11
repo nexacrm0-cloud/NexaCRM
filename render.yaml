@@ -57,7 +57,7 @@ services:
       - key: WHATSAPP_VERIFY_TOKEN
         generateValue: true
       - key: FRONTEND_URL
-        value: https://nexa-web.onrender.com # verify the actual subdomain after first deploy
+        value: https://nexa-web-c0ab.onrender.com
       - key: PAYMENT_PROVIDER_KIND
         value: mercadopago
       # ---- Fill these in the Render dashboard after deploy (sync:false
@@ -107,9 +107,9 @@ services:
       # server. NEXT_PUBLIC_API_URL is inlined into the client bundle at
       # build time, so it MUST be present here (it is, at build).
       - key: API_URL
-        value: https://nexa-api.onrender.com # verify the actual subdomain after first deploy
+        value: https://nexa-api-unv3.onrender.com
       - key: NEXT_PUBLIC_API_URL
-        value: https://nexa-api.onrender.com/api/v1 # verify the actual subdomain after first deploy
+        value: https://nexa-api-unv3.onrender.com/api/v1
       - key: SENTRY_AUTH_TOKEN
         sync: false
 
