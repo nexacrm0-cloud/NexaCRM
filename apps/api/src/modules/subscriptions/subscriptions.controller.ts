@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Req } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { SubscriptionsService } from './subscriptions.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -8,6 +8,7 @@ import { UserRole, changePlanSchema, PlanTier } from '@nexa/shared';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { User } from '@nexa/database';
 import { ZodPipe } from '../../common/pipes/zod.pipe';
+import { Request } from 'express';
 
 @Controller('subscriptions')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -24,6 +25,23 @@ export class SubscriptionsController {
   @Throttle({ default: { limit: 60, ttl: 60_000 } })
   async getCurrentPlan(@CurrentUser() user: User) {
     return this.subscriptionsService.getCurrentPlan(user.organizationId);
+  }
+
+  @Post('checkout')
+  @Roles(UserRole.OWNER)
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  async startCheckout(
+    @CurrentUser() user: User,
+    @Body(new ZodPipe(changePlanSchema)) body: { plan: PlanTier },
+    @Req() req: Request,
+  ) {
+    const frontendUrl = process.env.FRONTEND_URL || `${req.protocol}://${req.headers.host}`;
+    return this.subscriptionsService.startPlanCheckout(
+      user.organizationId,
+      user.id,
+      body.plan,
+      frontendUrl,
+    );
   }
 
   @Post('change')

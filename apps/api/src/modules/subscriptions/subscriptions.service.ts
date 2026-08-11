@@ -1,7 +1,15 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+  Inject,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '@nexa/database';
+import type { PaymentProvider } from '../billing/payment-provider.interface';
 
-const PLANS = {
+const PLANS: Record<string, PlanConfig> = {
   free: {
     id: 'free',
     name: 'Básico',
@@ -23,6 +31,7 @@ const PLANS = {
     price: 29,
     currency: 'USD',
     interval: 'month',
+    priceArs: 12900,
     features: [
       'Todo del plan Básico',
       'Automatizaciones (Automation Center)',
@@ -38,6 +47,7 @@ const PLANS = {
     price: 79,
     currency: 'USD',
     interval: 'month',
+    priceArs: 29900,
     features: [
       'Todo del plan Starter',
       'Agentes de Ventas IA',
@@ -54,6 +64,7 @@ const PLANS = {
     price: 199,
     currency: 'USD',
     interval: 'month',
+    priceArs: 69900,
     features: [
       'Todo del plan Pro',
       'Agentes de Operaciones IA',
@@ -67,11 +78,27 @@ const PLANS = {
   },
 };
 
+const PLAN_HIERARCHY: Record<string, number> = { free: 0, starter: 1, pro: 2, enterprise: 3 };
+
+type PlanConfig = {
+  id: string;
+  name: string;
+  price: number;
+  priceArs?: number;
+  currency: string;
+  interval: string;
+  features: string[];
+  limits: { users: number; clients: number; storage: number };
+};
+
 @Injectable()
 export class SubscriptionsService {
   private readonly logger = new Logger(SubscriptionsService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject('PAYMENT_PROVIDER') private payments: PaymentProvider,
+  ) {}
 
   async getAvailablePlans() {
     return Object.values(PLANS);
@@ -103,6 +130,67 @@ export class SubscriptionsService {
             canceledAt: subscription.canceledAt,
           }
         : null,
+    };
+  }
+
+  async startPlanCheckout(
+    organizationId: string,
+    userId: string,
+    newPlan: string,
+    frontendUrl: string,
+  ) {
+    const planConfig = PLANS[newPlan as keyof typeof PLANS];
+    if (!planConfig || !planConfig.priceArs || planConfig.priceArs <= 0) {
+      throw new BadRequestException('Plan inválido o sin costo de pago');
+    }
+
+    const org = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { plan: true },
+    });
+    if (!org) throw new NotFoundException('Organización no encontrada');
+
+    const currentLevel = PLAN_HIERARCHY[org.plan] ?? 0;
+    const targetLevel = PLAN_HIERARCHY[newPlan] ?? 0;
+    if (targetLevel <= currentLevel) {
+      throw new BadRequestException(
+        'El checkout solo aplica a mejoras de plan. Para degradar, usá la cancelación del plan actual.',
+      );
+    }
+
+    const owner = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, firstName: true, lastName: true, organizationId: true },
+    });
+    if (!owner || owner.organizationId !== organizationId) {
+      throw new ForbiddenException('No autorizado');
+    }
+
+    const amountCents = planConfig.priceArs * 100;
+
+    const checkout = await this.payments.createSubscription({
+      customerEmail: owner.email,
+      customerName: `${owner.firstName} ${owner.lastName}`.trim() || owner.email,
+      description: `Plan ${planConfig.name}`,
+      amountCents,
+      currency: 'ARS',
+      interval: 'month',
+      externalReference: `plan:${newPlan}:${organizationId}`,
+      successUrl: `${frontendUrl}/pricing?checkout=success`,
+      failureUrl: `${frontendUrl}/pricing?checkout=failed`,
+    });
+
+    this.logger.log(
+      `Plan checkout created: org=${organizationId} plan=${newPlan} ext_ref=plan:${newPlan}:${organizationId} externalId=${checkout.externalId}`,
+    );
+
+    return {
+      data: {
+        approvalUrl: checkout.approvalUrl,
+        externalId: checkout.externalId,
+        plan: newPlan,
+        amountCents,
+      },
     };
   }
 

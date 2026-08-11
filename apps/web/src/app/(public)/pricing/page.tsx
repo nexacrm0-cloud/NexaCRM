@@ -9,7 +9,7 @@ import { PageHeader } from '@/components/layout/page-header';
 import { CheckCircle2, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 type Plan = {
   id: string;
@@ -22,6 +22,15 @@ type Plan = {
 
 type CurrentPlanData = {
   currentPlan: Plan;
+};
+
+type CheckoutData = {
+  data: {
+    approvalUrl: string | null;
+    externalId: string;
+    plan: string;
+    amountCents: number;
+  };
 };
 
 const PLAN_BADGES: Record<
@@ -39,6 +48,12 @@ export default function PricingPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [changing, setChanging] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [checkoutSuccess, setCheckoutSuccess] = useState(false);
+
+  useEffect(() => {
+    setCheckoutSuccess(new URLSearchParams(window.location.search).get('checkout') === 'success');
+  }, []);
 
   const { data: plans } = useQuery({
     queryKey: ['plans'],
@@ -57,6 +72,23 @@ export default function PricingPage() {
       queryClient.invalidateQueries({ queryKey: ['auth-me'] });
       setChanging(null);
     },
+    onError: (err: Error) => {
+      setError(err.message);
+      setChanging(null);
+    },
+  });
+
+  const checkoutMutation = useMutation({
+    mutationFn: (plan: string) => api.post<CheckoutData>('/subscriptions/checkout', { plan }),
+    onSuccess: (data) => {
+      if (data?.data?.approvalUrl) {
+        window.location.href = data.data.approvalUrl;
+      }
+    },
+    onError: (err: Error) => {
+      setError(err.message);
+      setChanging(null);
+    },
   });
 
   const currentPlanId = currentPlanData?.currentPlan?.id ?? 'free';
@@ -67,8 +99,13 @@ export default function PricingPage() {
       return;
     }
     if (planId === currentPlanId) return;
+    setError(null);
     setChanging(planId);
-    changePlanMutation.mutate(planId);
+    if (planId === 'free') {
+      changePlanMutation.mutate(planId);
+    } else {
+      checkoutMutation.mutate(planId);
+    }
   }
 
   return (
@@ -87,6 +124,20 @@ export default function PricingPage() {
             sin letra chica.
           </p>
         </header>
+
+        {checkoutSuccess ? (
+          <div className="border-verde bg-verde/10 mx-auto max-w-2xl border px-5 py-4 text-center">
+            <p className="text-verde text-sm font-semibold">
+              Pago confirmado. Tu plan se actualizó.
+            </p>
+          </div>
+        ) : null}
+
+        {error ? (
+          <div className="mx-auto max-w-2xl border border-red-500/30 bg-red-500/10 px-5 py-4 text-center">
+            <p className="text-sm font-semibold text-red-600">{error}</p>
+          </div>
+        ) : null}
 
         <section
           className="border-ink/14 bg-ink/14 fade-up grid grid-cols-1 gap-px border md:grid-cols-2 lg:grid-cols-4"

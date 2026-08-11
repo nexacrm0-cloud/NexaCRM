@@ -12,6 +12,12 @@ import { NotificationsService } from '../notifications/notifications.service';
 
 const PLAN_HIERARCHY = { free: 0, starter: 1, pro: 2, enterprise: 3 };
 const REQUIRED_PLAN_FOR_BILLING = 'starter';
+const PLAN_NAMES: Record<string, string> = {
+  free: 'Básico',
+  starter: 'Starter',
+  pro: 'Pro',
+  enterprise: 'Enterprise',
+};
 
 @Injectable()
 export class SubscriptionsService {
@@ -347,6 +353,24 @@ export class SubscriptionsService {
     for (const ev of events) {
       const ref = 'externalReference' in ev ? ev.externalReference : undefined;
       if (!ref) continue;
+
+      if (ref.startsWith('plan:')) {
+        const parts = ref.split(':');
+        if (parts.length !== 3) {
+          this.logger.warn(`Invalid plan reference ${ref}`);
+          continue;
+        }
+        const plan = parts[1];
+        const orgId = parts[2];
+        if (!PLAN_NAMES[plan]) {
+          this.logger.warn(`Unknown plan in reference ${ref}`);
+          continue;
+        }
+        await this.applyPlanEvent(plan, orgId, ev);
+        applied += 1;
+        continue;
+      }
+
       const sub = await this.prisma.automationSubscription.findFirst({
         where: { id: ref },
       });
@@ -358,5 +382,116 @@ export class SubscriptionsService {
       applied += 1;
     }
     return { data: { applied } };
+  }
+
+  /**
+   * Base-plan lifecycle: updates the org `subscription` row + `organization.plan`
+   * after a Mercado Pago preapproval event. Runs as the nexa_app RLS role with an
+   * empty org var (webhooks are unauthenticated), so we bind `app.organization_id`
+   * transaction-locally — the same pattern used by the register flow — to make the
+   * RLS policies on `subscriptions` / `users` match before reading/writing.
+   */
+  async applyPlanEvent(plan: string, organizationId: string, event: PaymentWebhookEvent) {
+    let cycleEnd: Date | null = null;
+    const owners = await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRawUnsafe(
+        `SELECT set_config('app.organization_id', $1, true)`,
+        organizationId,
+      );
+
+      const owners = await tx.user.findMany({
+        where: { organizationId, role: { in: ['OWNER', 'ADMIN'] } },
+        select: { email: true, firstName: true },
+        take: 3,
+      });
+
+      if (event.kind === 'subscription.activated') {
+        const activatedAt = event.activatedAt;
+        cycleEnd = new Date(activatedAt.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+        await tx.subscription.upsert({
+          where: { organizationId },
+          create: {
+            organizationId,
+            plan,
+            status: 'active',
+            currentPeriodStart: activatedAt,
+            currentPeriodEnd: cycleEnd,
+            paymentProviderId: event.externalId,
+          },
+          update: {
+            plan,
+            status: 'active',
+            currentPeriodStart: activatedAt,
+            currentPeriodEnd: cycleEnd,
+            paymentProviderId: event.externalId,
+            canceledAt: null,
+          },
+        });
+
+        await tx.organization.update({
+          where: { id: organizationId },
+          data: { plan },
+        });
+      } else if (event.kind === 'subscription.cancelled') {
+        const current = await tx.organization.findUnique({
+          where: { id: organizationId },
+          select: { plan: true },
+        });
+        if (current?.plan === plan) {
+          await tx.subscription.updateMany({
+            where: { organizationId },
+            data: { status: 'canceled', canceledAt: event.cancelledAt },
+          });
+          await tx.organization.update({
+            where: { id: organizationId },
+            data: { plan: 'free' },
+          });
+        } else {
+          this.logger.warn(
+            `Ignoring cancellation of plan=${plan} for org=${organizationId} (current=${current?.plan})`,
+          );
+        }
+      } else if (event.kind === 'subscription.payment_failed') {
+        await tx.subscription.updateMany({
+          where: { organizationId },
+          data: { status: 'paused' },
+        });
+      }
+
+      return owners;
+    });
+
+    const planName = PLAN_NAMES[plan] ?? plan;
+    try {
+      if (event.kind === 'subscription.activated') {
+        for (const u of owners) {
+          await this.notifications
+            .sendSubscriptionActivatedEmail({
+              to: u.email,
+              firstName: u.firstName,
+              templateName: `Plan ${planName}`,
+              amountCents: 0,
+              cycleEndsAt: cycleEnd ?? new Date(),
+            })
+            .catch(() => undefined);
+        }
+      } else if (event.kind === 'subscription.payment_failed') {
+        for (const u of owners) {
+          await this.notifications
+            .sendSubscriptionFailedEmail({
+              to: u.email,
+              firstName: u.firstName,
+              templateName: `Plan ${planName}`,
+              reason: event.reason ?? 'Pago rechazado',
+            })
+            .catch(() => undefined);
+        }
+      }
+    } catch (err) {
+      this.logger.warn(
+        `Side-effect for plan event failed: ${err instanceof Error ? err.message : 'unknown'}`,
+      );
+    }
   }
 }
