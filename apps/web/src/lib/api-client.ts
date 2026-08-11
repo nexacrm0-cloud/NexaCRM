@@ -4,7 +4,11 @@ function getCookie(name: string): string | null {
   return match?.[1] ? decodeURIComponent(match[1]) : null;
 }
 
-export const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+export const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === 'production'
+    ? 'https://nexa-api-unv3.onrender.com/api/v1'
+    : 'http://localhost:4000/api/v1');
 
 class ApiClient {
   private baseUrl: string;

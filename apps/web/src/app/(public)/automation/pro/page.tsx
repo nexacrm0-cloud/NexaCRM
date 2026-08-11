@@ -22,7 +22,11 @@ export const metadata: Metadata = {
     'Plantillas de automatización que conectan tu CRM con WhatsApp, Slack, Mailchimp y tu back-office. Activá 14 días gratis, sin tarjeta.',
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === 'production'
+    ? 'https://nexa-api-unv3.onrender.com/api/v1'
+    : 'http://localhost:4000/api/v1');
 
 const ICONS: Record<string, LucideIcon> = {
   MessageCircle,

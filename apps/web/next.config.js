@@ -1,5 +1,14 @@
 const { withSentryConfig } = require('@sentry/nextjs');
 
+// Fallback for when API_URL / NEXT_PUBLIC_API_URL are not injected at build
+// time (Render doesn't propagate render.yaml env to pre-existing services).
+// Next.js bakes these into the standalone server / client bundle at build, so
+// they must resolve to the real prod API here.
+const defaultApiBase =
+  process.env.NODE_ENV === 'production'
+    ? 'https://nexa-api-unv3.onrender.com'
+    : 'http://localhost:4000';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
@@ -43,11 +52,11 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: `${process.env.API_URL || 'http://localhost:4000'}/api/:path*`,
+        destination: `${process.env.API_URL || defaultApiBase}/api/:path*`,
       },
       {
         source: '/uploads/:path*',
-        destination: `${process.env.API_URL || 'http://localhost:4000'}/uploads/:path*`,
+        destination: `${process.env.API_URL || defaultApiBase}/uploads/:path*`,
       },
     ];
   },
