@@ -51,7 +51,7 @@ interface StripeWebhookEvent {
 export class StripePaymentProvider implements PaymentProvider {
   readonly kind = 'stripe';
   private readonly logger = new Logger(StripePaymentProvider.name);
-  private readonly stripe: Stripe;
+  private readonly stripe: Stripe | null;
   private readonly webhookSecret: string;
   private readonly initialized: boolean;
 
@@ -67,13 +67,18 @@ export class StripePaymentProvider implements PaymentProvider {
     this.webhookSecret = this.config.get<string>('STRIPE_WEBHOOK_SECRET') ?? '';
 
     this.initialized = !!secretKey;
-    this.stripe = new Stripe(secretKey, {
-      apiVersion: '2026-07-29.dahlia',
-      typescript: true,
-      telemetry: false,
-      maxNetworkRetries: 2,
-      timeout: 15000,
-    });
+    // new Stripe('') throws, so only construct the client when a key exists.
+    // All methods call assertInitialized() before touching this.stripe, so a
+    // null instance is only ever reached when not configured.
+    this.stripe = secretKey
+      ? new Stripe(secretKey, {
+          apiVersion: '2026-07-29.dahlia',
+          typescript: true,
+          telemetry: false,
+          maxNetworkRetries: 2,
+          timeout: 15000,
+        })
+      : null;
 
     if (!this.initialized && this.config.get('NODE_ENV') === 'production') {
       this.logger.error('STRIPE_SECRET_KEY no seteado. StripePaymentProvider inactivo.');
@@ -109,7 +114,7 @@ export class StripePaymentProvider implements PaymentProvider {
       //    and redirect to the client_secret. We'll use Checkout Session here
       //    because it handles SCA, taxes, and payment method collection automatically.
 
-      const session = await this.stripe.checkout.sessions.create({
+      const session = await this.stripe!.checkout.sessions.create({
         mode: 'subscription',
         customer: customer.id,
         line_items: [
@@ -163,7 +168,7 @@ export class StripePaymentProvider implements PaymentProvider {
       // find the actual subscription. For simplicity, we assume externalId is
       // the Subscription ID — the webhook handler stores the mapping.
       // If we only have a session ID, we can list subscriptions for the customer.
-      await this.stripe.subscriptions.update(externalId, {
+      await this.stripe!.subscriptions.update(externalId, {
         cancel_at_period_end: true,
       });
       this.logger.log(`Stripe subscription set to cancel at period end: ${externalId}`);
@@ -195,7 +200,7 @@ export class StripePaymentProvider implements PaymentProvider {
     let event: Stripe.Event;
     try {
       if (sig && this.webhookSecret) {
-        event = this.stripe.webhooks.constructEvent(
+        event = this.stripe!.webhooks.constructEvent(
           payload as Buffer | string,
           sig,
           this.webhookSecret,
@@ -220,7 +225,7 @@ export class StripePaymentProvider implements PaymentProvider {
         // Retrieve the subscription to get the real subscription ID and status.
         const session = event.data.object as Stripe.Checkout.Session;
         if (session.subscription && typeof session.subscription === 'string') {
-          const subscription = await this.stripe.subscriptions.retrieve(session.subscription);
+          const subscription = await this.stripe!.subscriptions.retrieve(session.subscription);
           events.push(
             ...this.normalizeSubscriptionEvent(
               subscription,
@@ -260,7 +265,7 @@ export class StripePaymentProvider implements PaymentProvider {
         // invoice.subscription exists at runtime but not in types; cast to access
         const subscriptionId = (invoice as any).subscription;
         if (subscriptionId && typeof subscriptionId === 'string') {
-          const subscription = await this.stripe.subscriptions.retrieve(subscriptionId);
+          const subscription = await this.stripe!.subscriptions.retrieve(subscriptionId);
           events.push({
             kind: 'subscription.payment_failed',
             externalId: subscription.id,
@@ -287,13 +292,13 @@ export class StripePaymentProvider implements PaymentProvider {
 
   private async getOrCreateCustomer(email: string, name?: string): Promise<StripeCustomerResponse> {
     // Try to find existing customer by email
-    const customers = await this.stripe.customers.list({ email, limit: 1 });
+    const customers = await this.stripe!.customers.list({ email, limit: 1 });
     if (customers.data.length > 0) {
       return { id: customers.data[0].id, email: customers.data[0].email ?? email };
     }
 
     // Create new customer
-    const customer = await this.stripe.customers.create({
+    const customer = await this.stripe!.customers.create({
       email,
       name: name ?? undefined,
       metadata: { source: 'nexa-crm' },
@@ -310,7 +315,7 @@ export class StripePaymentProvider implements PaymentProvider {
     description: string,
   ): Promise<{ priceId: string; productId: string }> {
     // Look up existing product by metadata.plan_slug (filter manually since Stripe doesn't support metadata filter on list)
-    const products = await this.stripe.products.list({
+    const products = await this.stripe!.products.list({
       limit: 100,
       active: true,
     });
@@ -329,7 +334,7 @@ export class StripePaymentProvider implements PaymentProvider {
         description,
       };
 
-      const product = await this.stripe.products.create({
+      const product = await this.stripe!.products.create({
         name: meta.name,
         description: meta.description,
         metadata: { plan_slug: planSlug },
@@ -340,7 +345,7 @@ export class StripePaymentProvider implements PaymentProvider {
     }
 
     // Check if a price with this amount/currency/interval already exists for this product
-    const prices = await this.stripe.prices.list({
+    const prices = await this.stripe!.prices.list({
       product: productId,
       active: true,
       limit: 100,
@@ -358,7 +363,7 @@ export class StripePaymentProvider implements PaymentProvider {
     }
 
     // Create new price
-    const price = await this.stripe.prices.create({
+    const price = await this.stripe!.prices.create({
       product: productId,
       unit_amount: amountCents,
       currency: currency.toLowerCase(),
