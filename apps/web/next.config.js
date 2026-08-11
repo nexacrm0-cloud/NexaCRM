@@ -28,9 +28,12 @@ const nextConfig = {
     // need every page forced to dynamic rendering (perf tradeoff).
     // connect-src includes Sentry ingest domain so the browser can report errors.
     const sentryHost = process.env.NEXT_PUBLIC_SENTRY_HOST || 'sentry.io';
+    // The SPA calls the API directly via API_BASE, so connect-src must include
+    // its origin or every fetch is blocked by the CSP.
+    const apiOrigin = new URL(process.env.API_URL || defaultApiBase).origin;
     const cspValue = isDev
-      ? `default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://avatars.githubusercontent.com http://localhost; connect-src 'self' http://localhost:4000 https://*.githubusercontent.com https://${sentryHost}; font-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';`
-      : `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://avatars.githubusercontent.com http://localhost; connect-src 'self' http://localhost:4000 https://*.githubusercontent.com https://${sentryHost}; font-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';`;
+      ? `default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://avatars.githubusercontent.com http://localhost; connect-src 'self' ${apiOrigin} https://*.githubusercontent.com https://${sentryHost}; font-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';`
+      : `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://avatars.githubusercontent.com http://localhost; connect-src 'self' ${apiOrigin} https://*.githubusercontent.com https://${sentryHost}; font-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';`;
     return [
       {
         source: '/:path*',
