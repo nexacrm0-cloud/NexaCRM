@@ -54,15 +54,6 @@ services:
         generateValue: true
       - key: INTERNAL_API_KEY
         generateValue: true
-      # One-time bootstrap: nexa-db was created from a broken migration history
-      # (init rewritten as a full baseline). With this true, a failed deploy on
-      # the empty DB auto-resets and replays all migrations. Flip to false in
-      # the dashboard after the first successful deploy if you want zero risk
-      # of a future failed migration wiping data. sync:false keeps dashboard
-      # edits safe from blueprint re-syncs.
-      - key: PRISMA_BOOTSTRAP_RESET
-        value: "true"
-        sync: false
       - key: WHATSAPP_VERIFY_TOKEN
         generateValue: true
       - key: FRONTEND_URL
