@@ -20,7 +20,9 @@ databases:
   - name: nexa-db
     databaseName: nexa
     user: nexa
-    plan: starter
+    # Render deprecated legacy 'starter' Postgres plans for new databases.
+    # basic-256mb is the current cheapest paid instance type (256MB RAM).
+    plan: basic-256mb
     ipAllowList: [] # empty = allow only from same-region Render services
 
 services:
@@ -31,7 +33,7 @@ services:
     plan: starter
     dockerfilePath: apps/api/Dockerfile
     healthCheckPath: /api/v1/health
-    autoDeploy: true
+    autoDeployTrigger: commit
     envVars:
       - key: NODE_ENV
         value: production
@@ -43,7 +45,7 @@ services:
           property: connectionString
       - key: REDIS_URL
         fromService:
-          type: redis
+          type: keyvalue
           name: nexa-redis
           property: connectionString
       - key: JWT_SECRET
@@ -92,7 +94,7 @@ services:
     plan: starter
     dockerfilePath: apps/web/Dockerfile
     healthCheckPath: /
-    autoDeploy: true
+    autoDeployTrigger: commit
     envVars:
       - key: NODE_ENV
         value: production
@@ -112,7 +114,7 @@ services:
         sync: false
 
   # ---------------- Redis (Key Value) ----------------
-  - type: redis
+  - type: keyvalue
     name: nexa-redis
     plan: starter
     ipAllowList: [] # empty = allow only from same-region Render services
