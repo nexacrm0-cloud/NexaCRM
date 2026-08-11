@@ -37,7 +37,9 @@ COPY packages/shared/package.json ./packages/shared/
 COPY packages/config-typescript/package.json ./packages/config-typescript/
 COPY packages/config-eslint/package.json ./packages/config-eslint/
 RUN npm install -g prisma@6.19.3
-RUN pnpm install --frozen-lockfile --prod
+# --ignore-scripts: --prod skips devDeps, so the root 'prepare' (husky)
+# would fail (husky is a devDep). db:generate below handles Prisma client.
+RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 RUN pnpm --filter @nexa/database db:generate
 
 FROM node:20-alpine AS runner
