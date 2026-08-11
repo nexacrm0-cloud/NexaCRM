@@ -125,7 +125,8 @@ export class MercadoPagoWebhookController {
         if (Array.isArray(v)) headers[k.toLowerCase()] = String(v[0] ?? '');
         else if (typeof v === 'string') headers[k.toLowerCase()] = v;
       }
-      await this.subscriptionsService.handleWebhook(payload, headers);
+      const query = (req.query ?? {}) as Record<string, unknown>;
+      await this.subscriptionsService.handleWebhook(payload, headers, query);
       return res.status(200).send('OK');
     } catch (err) {
       if (err instanceof BadRequestException) {

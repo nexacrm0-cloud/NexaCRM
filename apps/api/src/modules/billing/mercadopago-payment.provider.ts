@@ -73,11 +73,19 @@ export class MercadoPagoProvider implements PaymentProvider {
   private readonly accessToken: string;
   private readonly baseUrl: string;
   private readonly initialized: boolean;
+  private readonly notificationUrl: string;
 
   constructor(private config: ConfigService) {
     this.accessToken = this.config.get<string>('MP_ACCESS_TOKEN') ?? '';
     this.baseUrl = this.config.get<string>('MP_API_BASE_URL') ?? 'https://api.mercadopago.com';
     this.initialized = !!this.accessToken;
+    // Mercado Pago does NOT deliver subscription/preapproval notifications to
+    // the dashboard-configured webhook URL — that only covers payments. The
+    // preapproval notification_url must be passed at creation time and it
+    // takes precedence over any dashboard config.
+    this.notificationUrl =
+      this.config.get<string>('MP_NOTIFICATION_URL') ??
+      'https://nexa-api-unv3.onrender.com/api/v1/automation/webhooks/mercadopago';
 
     this.axios = axios.create({
       baseURL: this.baseUrl,
@@ -116,6 +124,7 @@ export class MercadoPagoProvider implements PaymentProvider {
         pending: input.successUrl,
       },
       payer_email: input.customerEmail,
+      notification_url: this.notificationUrl,
       ...(input.customerName ? { payer_first_name: input.customerName } : {}),
     };
 
@@ -156,11 +165,13 @@ export class MercadoPagoProvider implements PaymentProvider {
   async parseWebhook(
     payload: unknown,
     headers: Record<string, string>,
+    query?: Record<string, unknown>,
   ): Promise<PaymentWebhookEvent[]> {
     if (!payload || typeof payload !== 'object') return [];
 
-    // Verify signature if webhook secret is configured
-    this.verifySignature(payload as Record<string, unknown>, headers);
+    // Verify signature if webhook secret is configured. `data.id` lives in the
+    // request's query string for Mercado Pago notifications.
+    this.verifySignature(payload as Record<string, unknown>, headers, query);
 
     const p = payload as MPWebhookPayload;
     const topic = p.topic || p.type;
@@ -298,7 +309,11 @@ export class MercadoPagoProvider implements PaymentProvider {
     return c;
   }
 
-  private verifySignature(payload: Record<string, unknown>, headers: Record<string, string>): void {
+  private verifySignature(
+    payload: Record<string, unknown>,
+    headers: Record<string, string>,
+    query?: Record<string, unknown>,
+  ): void {
     const sig = headers['x-signature'];
     const requestId = headers['x-request-id'];
     const webhookSecret = this.config.get<string>('MP_WEBHOOK_SECRET');
@@ -323,15 +338,28 @@ export class MercadoPagoProvider implements PaymentProvider {
       throw new BadRequestException('Invalid signature format');
     }
 
-    // 2. Validate timestamp (prevent replay - max 5 min skew)
-    const now = Math.floor(Date.now() / 1000);
+    // 2. Validate timestamp (prevent replay - max 5 min skew). Mercado Pago
+    // sends ts in milliseconds; tolerate the legacy seconds form too.
     const tsNum = parseInt(ts, 10);
-    if (Number.isNaN(tsNum) || Math.abs(now - tsNum) > 300) {
+    const nowMs = Date.now();
+    let tsMs = tsNum;
+    if (tsMs < 1e12) tsMs *= 1000;
+    if (Number.isNaN(tsNum) || Math.abs(nowMs - tsMs) > 300_000) {
       throw new BadRequestException('Webhook timestamp expired');
     }
 
-    // 3. Build manifest exactly as MP expects: "ts.{JSON.stringify(payload)}"
-    const manifest = `${ts}.${JSON.stringify(payload)}`;
+    // 3. Build manifest exactly as MP signs it today:
+    //    "id:{data.id};request-id:{x-request-id};ts:{ts};" omitting pairs whose
+    //    value is absent. data.id comes from the `data.id` query param.
+    const dataId = String(
+      query?.['data.id'] ?? (payload as Record<string, unknown>)?.data ?? '',
+    ).toLowerCase();
+    const manifestParts: string[] = [];
+    if (dataId) manifestParts.push(`id:${dataId}`);
+    if (requestId) manifestParts.push(`request-id:${requestId}`);
+    manifestParts.push(`ts:${ts}`);
+    const manifest = `${manifestParts.join(';')};`;
+
     const expectedSignature = crypto
       .createHmac('sha256', webhookSecret!)
       .update(manifest)
@@ -341,10 +369,11 @@ export class MercadoPagoProvider implements PaymentProvider {
     const sigBuffer = Buffer.from(v1, 'hex');
     const expectedBuffer = Buffer.from(expectedSignature, 'hex');
 
-    if (
-      sigBuffer.length !== expectedBuffer.length ||
-      !crypto.timingSafeEqual(sigBuffer, expectedBuffer)
-    ) {
+    const matches =
+      sigBuffer.length === expectedBuffer.length &&
+      crypto.timingSafeEqual(sigBuffer, expectedBuffer);
+
+    if (!matches) {
       this.logger.warn(
         `MP webhook signature mismatch - requestId: ${headers['x-request-id'] || 'unknown'}`,
       );

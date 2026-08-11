@@ -82,6 +82,8 @@ services:
         sync: false
       - key: MP_WEBHOOK_SECRET
         sync: false
+      - key: MP_NOTIFICATION_URL
+        value: https://nexa-api-unv3.onrender.com/api/v1/automation/webhooks/mercadopago
       - key: MP_SANDBOX_MODE
         value: "false"
       - key: SENTRY_DSN

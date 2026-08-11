@@ -347,8 +347,12 @@ export class SubscriptionsService {
     return { data: { id: updated.id, status: updated.status, billingCycleEndsAt: cycle } };
   }
 
-  async handleWebhook(payload: unknown, headers: Record<string, string>) {
-    const events = await this.payments.parseWebhook(payload, headers);
+  async handleWebhook(
+    payload: unknown,
+    headers: Record<string, string>,
+    query?: Record<string, unknown>,
+  ) {
+    const events = await this.payments.parseWebhook(payload, headers, query);
     let applied = 0;
     for (const ev of events) {
       const ref = 'externalReference' in ev ? ev.externalReference : undefined;

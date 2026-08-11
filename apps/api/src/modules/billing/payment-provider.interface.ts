@@ -32,8 +32,14 @@ export interface PaymentProvider {
   /**
    * Parse a webhook payload from the provider and normalize it.
    * The result is a list of normalized events so multiple can be returned at once.
+   * `query` carries the incoming request's query string params (used by
+   * Mercado Pago's signature manifest which references `data.id` from the URL).
    */
-  parseWebhook(payload: unknown, headers: Record<string, string>): Promise<PaymentWebhookEvent[]>;
+  parseWebhook(
+    payload: unknown,
+    headers: Record<string, string>,
+    query?: Record<string, unknown>,
+  ): Promise<PaymentWebhookEvent[]>;
 }
 
 export type PaymentWebhookEvent =

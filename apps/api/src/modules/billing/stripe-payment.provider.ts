@@ -185,6 +185,7 @@ export class StripePaymentProvider implements PaymentProvider {
   async parseWebhook(
     payload: unknown,
     headers: Record<string, string>,
+    _query?: Record<string, unknown>,
   ): Promise<PaymentWebhookEvent[]> {
     if (!payload || typeof payload !== 'object') return [];
 

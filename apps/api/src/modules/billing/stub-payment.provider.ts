@@ -35,7 +35,11 @@ export class StubPaymentProvider implements PaymentProvider {
     this.logger.warn(`[STUB] cancelSubscription ${externalId}`);
   }
 
-  async parseWebhook(payload: unknown): Promise<PaymentWebhookEvent[]> {
+  async parseWebhook(
+    payload: unknown,
+    _headers?: Record<string, string>,
+    _query?: Record<string, unknown>,
+  ): Promise<PaymentWebhookEvent[]> {
     if (!payload || typeof payload !== 'object') return [];
     const p = payload as { kind?: string; externalId?: string; externalReference?: string };
     const at = new Date();
