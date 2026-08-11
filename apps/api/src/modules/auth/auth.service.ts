@@ -68,6 +68,14 @@ export class AuthService {
         },
       });
 
+      // RLS: pipeline_stages is tenant-scoped (policy WITH CHECK compares
+      // "organizationId" against current_setting('app.organization_id')).
+      // On this unauthenticated register request the TenantMiddleware left
+      // the session var empty, so creating the default stages below would be
+      // rejected. Bind the var transaction-locally (is_local=true reverts it
+      // after commit) to the freshly created org — never attacker-controlled.
+      await tx.$executeRawUnsafe(`SELECT set_config('app.organization_id', $1, true)`, org.id);
+
       const user = await tx.user.create({
         data: {
           email: data.email,
