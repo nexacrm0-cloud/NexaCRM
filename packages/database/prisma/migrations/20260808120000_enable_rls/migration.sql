@@ -78,18 +78,27 @@
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'nexa_app') THEN
-    CREATE ROLE nexa_app NOLOGIN NOBYPASSRLS;
+    CREATE ROLE nexa_app NOLOGIN;
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'nexa_admin') THEN
-    -- BYPASSRLS is what lets migrations, seeds, and the support tooling
-    -- write across tenants. Keep this role's password rotated and never
-    -- hand it to the API process.
-    CREATE ROLE nexa_admin NOLOGIN BYPASSRLS;
+    -- nexa_admin is the cross-tenant admin role for migrations, seeds and
+    -- support tooling. BYPASSRLS is applied below only when the current role
+    -- is allowed to (superuser): Render's managed Postgres DB owner is not a
+    -- superuser, so there it degrades gracefully and the API path (nexa_app
+    -- + tenant policies) is unaffected.
+    CREATE ROLE nexa_admin NOLOGIN;
   END IF;
 END$$;
 
-ALTER ROLE nexa_app NOBYPASSRLS;
-ALTER ROLE nexa_admin BYPASSRLS;
+-- Best-effort BYPASSRLS: creator of a BYPASSRLS role needs BYPASSRLS (or
+-- superuser). Local superuser dev keeps the admin bypass; on Render it is a
+-- NOTICE and the admin role simply can't bypass RLS.
+DO $$
+BEGIN
+  ALTER ROLE nexa_admin BYPASSRLS;
+EXCEPTION WHEN insufficient_privilege THEN
+  RAISE NOTICE 'nexa_admin created without BYPASSRLS (current role lacks permission); admin cross-tenant bypass unavailable';
+END$$;
 
 -- On Render there is a single DATABASE_URL (the DB owner) for both migrations
 -- and the API process. For the TenantMiddleware to SET ROLE nexa_app at
