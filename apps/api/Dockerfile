@@ -58,7 +58,6 @@ COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=prod-deps /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=prod-deps /app/packages/database/node_modules ./packages/database/node_modules
 COPY --from=prod-deps /app/packages/shared/node_modules ./packages/shared/node_modules
-COPY --from=prod-deps /app/packages/database/node_modules/.prisma ./node_modules/.prisma
 
 EXPOSE 4000
 CMD ["node", "apps/api/dist/main"]
