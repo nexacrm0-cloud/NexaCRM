@@ -15,10 +15,22 @@ type Plan = {
   id: string;
   name: string;
   price: number;
+  priceArs?: number;
   currency: string;
   interval: string;
   features: string[];
 };
+
+function formatPlanPrice(plan: Plan) {
+  if (plan.priceArs) {
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      maximumFractionDigits: 0,
+    }).format(plan.priceArs);
+  }
+  return `${plan.currency} ${plan.price}`;
+}
 
 type CurrentPlanData = {
   currentPlan: Plan;
@@ -173,8 +185,7 @@ export default function PricingPage() {
                     <p className="font-display tabular text-[36px] tracking-[-0.02em]">Gratis</p>
                   ) : (
                     <p className="font-display tabular text-[36px] tracking-[-0.02em]">
-                      <span className="eyebrow text-ink-3 mr-1">{plan.currency}</span>
-                      <span>{plan.price}</span>
+                      <span>{formatPlanPrice(plan)}</span>
                       <span className="eyebrow text-ink-3 ml-2 align-baseline">
                         /{plan.interval === 'month' ? 'mes' : 'año'}
                       </span>

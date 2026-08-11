@@ -814,7 +814,7 @@ function SubscriptionCard() {
   const { data: planData, isLoading } = useQuery({
     queryKey: ['current-plan'],
     queryFn: () =>
-      api.get<{ currentPlan: { id: string; name: string; price: number } }>(
+      api.get<{ currentPlan: { id: string; name: string; price: number; priceArs?: number } }>(
         '/subscriptions/current',
       ),
   });
@@ -859,7 +859,15 @@ function SubscriptionCard() {
               {plan?.name ?? 'Básico'}
             </Badge>
             <p className="text-muted-foreground mt-1 text-sm">
-              {plan?.price === 0 ? 'Gratis' : `$${plan?.price}/mes`}
+              {plan?.price === 0
+                ? 'Gratis'
+                : plan?.priceArs
+                  ? `${new Intl.NumberFormat('es-AR', {
+                      style: 'currency',
+                      currency: 'ARS',
+                      maximumFractionDigits: 0,
+                    }).format(plan.priceArs)}/mes`
+                  : `$${plan?.price}/mes`}
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={() => router.push('/pricing')}>
