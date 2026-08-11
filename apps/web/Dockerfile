@@ -17,6 +17,9 @@ COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
 COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
+# @nexa/shared resolves to dist/index.js (main field), so it must be compiled
+# before web builds. dist/ is gitignored and excluded from the build context.
+RUN pnpm --filter @nexa/shared build
 RUN pnpm --filter @nexa/web build
 
 FROM base AS runner

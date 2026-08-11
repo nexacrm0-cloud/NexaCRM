@@ -22,6 +22,9 @@ COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_module
 COPY . .
 RUN pnpm --filter @nexa/database db:generate
 RUN pnpm --filter @nexa/database build
+# @nexa/api imports @nexa/shared, which resolves to dist/index.js — it must
+# be compiled before the API build. dist/ is gitignored/excluded from context.
+RUN pnpm --filter @nexa/shared build
 RUN pnpm --filter @nexa/api build
 
 FROM base AS prod-deps
