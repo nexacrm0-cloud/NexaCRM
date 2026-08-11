@@ -36,6 +36,7 @@ COPY packages/database/prisma ./packages/database/prisma
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/config-typescript/package.json ./packages/config-typescript/
 COPY packages/config-eslint/package.json ./packages/config-eslint/
+RUN npm install -g prisma@6.19.3
 RUN pnpm install --frozen-lockfile --prod
 RUN pnpm --filter @nexa/database db:generate
 
@@ -50,6 +51,7 @@ COPY --from=builder /app/packages/database/prisma ./packages/database/prisma
 COPY --from=builder /app/packages/database/package.json ./packages/database/
 COPY --from=builder /app/packages/database/src ./packages/database/src
 COPY --from=builder /app/packages/shared/dist ./packages/shared/
+COPY --from=builder /app/packages/shared/package.json ./packages/shared/
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=prod-deps /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=prod-deps /app/packages/database/node_modules ./packages/database/node_modules
