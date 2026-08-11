@@ -12,12 +12,16 @@ const nextConfig = {
   async headers() {
     const isDev = process.env.NODE_ENV === 'development';
     // In dev, Next.js (webpack/react-refresh) requires 'unsafe-eval' and allows inline styles/scripts.
-    // In production we keep the stricter policy (no unsafe-eval, only 'self' scripts).
+    // In production we keep 'unsafe-eval' off. 'unsafe-inline' in script-src is
+    // required because these pages are statically prerendered: Next.js only
+    // injects a nonce during request-time SSR, so a strict 'self'-only policy
+    // blocks the inline __next_f hydration scripts. A nonce-based CSP would
+    // need every page forced to dynamic rendering (perf tradeoff).
     // connect-src includes Sentry ingest domain so the browser can report errors.
     const sentryHost = process.env.NEXT_PUBLIC_SENTRY_HOST || 'sentry.io';
     const cspValue = isDev
       ? `default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://avatars.githubusercontent.com http://localhost; connect-src 'self' http://localhost:4000 https://*.githubusercontent.com https://${sentryHost}; font-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';`
-      : `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://avatars.githubusercontent.com http://localhost; connect-src 'self' http://localhost:4000 https://*.githubusercontent.com https://${sentryHost}; font-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';`;
+      : `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://avatars.githubusercontent.com http://localhost; connect-src 'self' http://localhost:4000 https://*.githubusercontent.com https://${sentryHost}; font-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';`;
     return [
       {
         source: '/:path*',
