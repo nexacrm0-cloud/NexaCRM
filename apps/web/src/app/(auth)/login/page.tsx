@@ -233,15 +233,6 @@ export default function LoginPage() {
             Registrarme
           </Link>
         </p>
-        <p className="eyebrow text-ink-3 mt-3 text-center">
-          <Link href="/terminos-y-condiciones" className="hover:text-ink-2 transition-colors">
-            Términos y Condiciones
-          </Link>
-          {' · '}
-          <Link href="/politica-de-privacidad" className="hover:text-ink-2 transition-colors">
-            Política de Privacidad
-          </Link>
-        </p>
       </div>
     </AuthShell>
   );
