@@ -27,20 +27,17 @@ const SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
 
 /**
  * SECURITY D6: renders a Cloudflare Turnstile widget using the official
- * API directly. We use this instead of a third-party wrapper because the
- * wrapper previously failed to mount silently on this build, leaving the
- * user stuck in a 400 loop with no UI feedback.
+ * API directly.
  *
- * Behavior:
- *   - If siteKey is missing: shows a clear, visible error so the missing
- *     env var is obvious instead of failing silently.
- *   - On first mount: injects the Turnstile script (once per page load).
- *   - On unmount: removes the widget so we can re-render it on the next
- *     failure without leaking instances.
- *
- * The component surfaces render-state to the console (visible in DevTools)
- * so we can diagnose mounting issues without having to guess from a blank
- * screen.
+ * The component:
+ *   - Injects the official script tag on mount if not already present.
+ *   - Waits for both the script to load AND the container ref to be
+ *     attached before calling window.turnstile.render(). This fixes a
+ *     race where the script's onload fires before React has committed
+ *     the container div to the DOM.
+ *   - Surfaces render-state to the user (visible message instead of
+ *     failing silently) so a missing site key or failed load is obvious.
+ *   - Cleans up the widget instance on unmount.
  */
 export function TurnstileWidget({
   siteKey,
@@ -67,19 +64,20 @@ export function TurnstileWidget({
 
     let cancelled = false;
 
-    function renderWidget() {
+    function tryRender() {
       if (cancelled) return;
       if (!containerRef.current) {
-        // Container not ready yet — try again next tick.
-        setTimeout(renderWidget, 50);
+        // Container not attached yet — wait one frame and retry.
+        requestAnimationFrame(tryRender);
         return;
       }
       if (!window.turnstile) {
-        setStatus('error');
-        setErrorMsg('turnstile global no está disponible después de cargar el script');
+        // Script not loaded yet — wait for the load event and retry.
         return;
       }
       try {
+        // Avoid double-rendering the same container.
+        if (widgetIdRef.current) return;
         widgetIdRef.current = window.turnstile.render(containerRef.current, {
           sitekey: siteKey!,
           callback: (token) => {
@@ -106,40 +104,61 @@ export function TurnstileWidget({
       }
     }
 
-    // Load the script if not already present.
+    setStatus('loading');
+
     if (window.turnstile) {
-      renderWidget();
-    } else {
-      setStatus('loading');
-      const existing = document.querySelector(
-        `script[src="${SCRIPT_SRC}"]`,
-      ) as HTMLScriptElement | null;
-      if (existing) {
-        // Script tag exists; wait for it to finish loading if not ready.
-        if ((existing as any).dataset.loaded === 'true') {
-          renderWidget();
-        } else {
-          existing.addEventListener('load', renderWidget, { once: true });
-          existing.addEventListener('error', () => {
-            setStatus('error');
-            setErrorMsg('No se pudo cargar el script de Turnstile');
-          });
+      // Script already loaded (e.g. another instance rendered earlier).
+      tryRender();
+      return () => {
+        cancelled = true;
+        if (widgetIdRef.current && window.turnstile) {
+          try {
+            window.turnstile.remove(widgetIdRef.current);
+          } catch {
+            // ignore
+          }
+          widgetIdRef.current = null;
         }
+      };
+    }
+
+    const existing = document.querySelector(
+      `script[src="${SCRIPT_SRC}"]`,
+    ) as HTMLScriptElement | null;
+
+    const onScriptLoad = () => {
+      // Cloudflare attaches window.turnstile when api.js evaluates.
+      tryRender();
+    };
+
+    if (existing) {
+      if ((existing as any).dataset.loaded === 'true') {
+        onScriptLoad();
       } else {
-        const script = document.createElement('script');
-        script.src = SCRIPT_SRC;
-        script.async = true;
-        script.defer = true;
-        script.onload = () => {
-          (script as any).dataset.loaded = 'true';
-          renderWidget();
-        };
-        script.onerror = () => {
-          setStatus('error');
-          setErrorMsg('No se pudo cargar el script de Turnstile (network/CSP)');
-        };
-        document.head.appendChild(script);
+        existing.addEventListener('load', onScriptLoad, { once: true });
+        existing.addEventListener(
+          'error',
+          () => {
+            setStatus('error');
+            setErrorMsg('No se pudo cargar el script de Turnstile (network/CSP)');
+          },
+          { once: true },
+        );
       }
+    } else {
+      const script = document.createElement('script');
+      script.src = SCRIPT_SRC;
+      script.async = true;
+      script.defer = true;
+      script.onload = () => {
+        (script as any).dataset.loaded = 'true';
+        onScriptLoad();
+      };
+      script.onerror = () => {
+        setStatus('error');
+        setErrorMsg('No se pudo cargar el script de Turnstile (network/CSP)');
+      };
+      document.head.appendChild(script);
     }
 
     return () => {
@@ -174,7 +193,7 @@ export function TurnstileWidget({
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <div ref={containerRef} className="min-h-[65px]" />
+      <div ref={containerRef} className="min-h-[65px] w-full" />
       {status === 'loading' && (
         <div className="eyebrow text-ink-3">Cargando CAPTCHA…</div>
       )}
