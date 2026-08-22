@@ -342,13 +342,16 @@ export class AuthController {
     // cookie can only be set/cleared over HTTPS from the same host (no
     // subdomain spoofing, no path override). In dev (http), we fall back to a
     // plain name so the browser actually stores the cookie.
+    // SECURITY D4: maxAge dropped from 7d → 24h to match the JWT exp claim
+    // (set in AuthService.generateTokens). The browser discards the cookie
+    // when maxAge elapses, mirroring the server-side expiry.
     const name = process.env.NODE_ENV === 'production' ? '__Host-refresh_token' : 'refresh_token';
     res.cookie(name, refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 24 * 60 * 60 * 1000,
     });
   }
 

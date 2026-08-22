@@ -613,7 +613,12 @@ export class AuthService {
         },
         {
           secret: process.env.JWT_REFRESH_SECRET,
-          expiresIn: '7d',
+          // SECURITY D4: refresh token TTL dropped from 7d → 24h. A leaked
+          // refresh token now gives the attacker at most one day of access
+          // (vs. one week). The cookie maxAge in AuthController.setRefreshTokenCookie
+          // is also reduced to match. Hard cut: existing sessions > 24h
+          // will be forced to re-login on the next refresh attempt.
+          expiresIn: '24h',
         },
       ),
     ]);
