@@ -470,7 +470,13 @@ export class InvoicesService {
                 ? 'FACTURA M'
                 : 'FACTURA';
 
-    return new Promise((resolve, reject) => {
+    // SECURITY: pdfkit runs synchronously inside an event loop. A pathological
+    // input (thousands of items, gigantic notes/terms strings) can pin the
+    // event loop and turn into a slow-loris DoS. Cap the whole PDF generation
+    // at 15s — past that we abort, return 504 to the client, and the throttler
+    // (10/min on /invoices/:id/pdf) bounds the blast radius.
+    const PDF_TIMEOUT_MS = 15_000;
+    const generation = new Promise<Buffer>((resolve, reject) => {
       const doc = new PDFDocument({ margin: 50 });
       const chunks: Buffer[] = [];
 
@@ -561,5 +567,18 @@ export class InvoicesService {
 
       doc.end();
     });
+
+    let timer: NodeJS.Timeout | undefined;
+    const timeout = new Promise<Buffer>((_, reject) => {
+      timer = setTimeout(
+        () => reject(new Error(`PDF generation exceeded ${PDF_TIMEOUT_MS}ms`)),
+        PDF_TIMEOUT_MS,
+      );
+    });
+    try {
+      return await Promise.race([generation, timeout]);
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
   }
 }

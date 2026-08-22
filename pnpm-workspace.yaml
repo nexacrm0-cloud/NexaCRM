@@ -1,3 +1,14 @@
 packages:
   - "apps/*"
   - "packages/*"
+
+# NOTE: Cannot pin transitive multer to >=2.2.0 from pnpm 9.x.
+# @nestjs/platform-express@10.4.22 (the last 10.x) has multer@2.0.2 as a peer
+# dependency. pnpm overrides / peerDependencyRules do not propagate to peer
+# deps in pnpm 9.x for this combination. The proper fix is upgrading to
+# @nestjs/* v11, which is a major-version migration tracked separately.
+# The HIGH-severity Multer advisories (DoS via deeply nested fields, etc.)
+# remain in the audit report but cannot be resolved here without the
+# NestJS 11 upgrade. /uploads controllers apply additional server-side
+# validation (file-magic-bytes pipe + size limit) that mitigates the
+# practical exploitability of these DoS vectors.

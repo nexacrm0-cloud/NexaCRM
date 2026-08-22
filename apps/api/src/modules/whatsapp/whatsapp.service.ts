@@ -2,10 +2,20 @@ import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nest
 import { PrismaService } from '@nexa/database';
 import { EventBusService } from '../../event-bus/event-bus.service';
 import { AgentsService } from '../agents/agents.service';
+import { sanitizeString } from '../../common/utils/sanitize';
 
 @Injectable()
 export class WhatsAppService {
   private readonly logger = new Logger(WhatsAppService.name);
+
+  // SECURITY: cap the size of any user-supplied string we propagate. WhatsApp
+  // text messages are theoretically unbounded but Meta caps at ~65k chars in
+  // practice. Truncating to 16k chars here is a defense-in-depth cap that
+  // (a) prevents memory pressure if a misbehaving sender sends a multi-MB
+  // payload through the schema and (b) keeps downstream event-bus payloads
+  // bounded. The `sanitizeString` helper also strips control chars that
+  // could break terminal/JSON rendering.
+  private static readonly MAX_WHATSAPP_BODY = 16_000;
 
   constructor(
     private prisma: PrismaService,
@@ -62,10 +72,20 @@ export class WhatsAppService {
       return { status: 'ignored', reason: 'agent_not_active' };
     }
 
+    // SECURITY: normalize the inbound body before propagating it to the
+    // event bus / agent webhook. We strip control characters (including the
+    // bidi-override set U+202A-U+202E / U+2066-U+2069 used in some phishing
+    // payloads to spoof filenames in chat UIs) and cap length so a runaway
+    // sender can't bloat the payload.
+    const sanitizedBody = sanitizeString(
+      payload.messageBody ?? '',
+      WhatsAppService.MAX_WHATSAPP_BODY,
+    );
+
     const domainPayload = {
       phoneNumberId: payload.phoneNumberId,
       from: payload.from,
-      messageBody: payload.messageBody,
+      messageBody: sanitizedBody,
       messageId: payload.messageId,
       receivedAt: payload.timestamp,
       organizationId: orgId,

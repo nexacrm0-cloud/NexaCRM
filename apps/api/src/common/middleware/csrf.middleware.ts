@@ -13,6 +13,7 @@ const EXCLUDED_PATHS = [
   '/api/v1/auth/reset-password',
   '/api/v1/auth/complete-login',
   '/api/v1/auth/accept-invitation',
+  '/api/v1/auth/otp/',
   '/api/v1/webhooks/',
   '/api/v1/agent-actions',
 ];

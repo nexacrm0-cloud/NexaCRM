@@ -32,6 +32,11 @@ describe('AuthService', () => {
       findUnique: jest.fn(), // called in the slug-uniqueness loop inside register
     },
     pipelineStage: { create: jest.fn() },
+    // The register flow calls tx.$executeRawUnsafe to bind the RLS
+    // organization_id session var before creating tenant-scoped rows
+    // (pipeline_stages). Without this stub the test crashes inside the
+    // transaction callback with `tx.$executeRawUnsafe is not a function`.
+    $executeRawUnsafe: jest.fn().mockResolvedValue(0),
   };
   const mockPrisma = {
     ...mockTx,
