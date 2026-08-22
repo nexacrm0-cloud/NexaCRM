@@ -1,6 +1,15 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import crypto from 'crypto';
+
+// SECURITY D3: Web Crypto (available in Edge runtime) — `node:crypto` is
+// not, so we use `crypto.getRandomValues` instead of `crypto.randomBytes`.
+function generateNonce(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
+}
 
 const PUBLIC_PATHS = [
   '/',
@@ -15,18 +24,6 @@ const PUBLIC_PATHS = [
   '/automatizaciones/pro',
 ];
 
-// SECURITY D3: per-request nonce for CSP. The middleware generates it,
-// attaches it to the request so server components can read it via
-// `headers().get('x-nonce')`, and embeds it in the CSP header that the
-// browser enforces. A nonce-based CSP is strictly stronger than
-// 'unsafe-inline' — every inline <script>/<style> must explicitly carry
-// the nonce attribute or the browser refuses to execute it.
-function generateNonce(): string {
-  // 128 bits is enough entropy to make guessing impractical while staying a
-  // reasonable size for the CSP header.
-  return crypto.randomBytes(16).toString('base64');
-}
-
 function buildCsp(nonce: string): string {
   const isDev = process.env.NODE_ENV === 'development';
   const sentryHost = process.env.NEXT_PUBLIC_SENTRY_HOST || 'sentry.io';
@@ -40,8 +37,7 @@ function buildCsp(nonce: string): string {
         : 'http://localhost:4000';
     return new URL(process.env.API_URL || defaultApiBase).origin;
   })();
-  const turnstileHosts =
-    'https://challenges.cloudflare.com https://*.turnstile.cloudflare.com';
+  const turnstileHosts = 'https://challenges.cloudflare.com https://*.turnstile.cloudflare.com';
   if (isDev) {
     return [
       `default-src 'self'`,
