@@ -208,16 +208,26 @@ async function bootstrap() {
   if (process.env.FRONTEND_URL && !allowedOrigins.includes(process.env.FRONTEND_URL)) {
     allowedOrigins.push(process.env.FRONTEND_URL);
   }
+  // SECURITY: requests WITHOUT an Origin header are treated as server-to-server.
+  // Browsers ALWAYS send Origin on CORS requests; the absence of one means a
+  // direct programmatic call (Render health probe, n8n webhook dispatch,
+  // internal cron jobs, etc.) — none of which carry user credentials, so
+  // there is no browser-based CSRF surface to defend.
+  //
+  // The original commit (e070181) blocked all no-Origin requests, which
+  // broke Render's /api/v1/health probe and made the deploy fail with a
+  // Timed Out. This restores the standard CORS semantics: missing Origin +
+  // no credentials = allow. CSRF defense for actual user requests is
+  // handled by the CsrfMiddleware (double-submit cookie pattern), which
+  // gates every mutating endpoint.
+  //
+  // Webhooks (/api/v1/webhooks/*) and unauthenticated /api/v1/auth/* are
+  // not CSRF-relevant: webhooks validate HMAC, /auth/* validates Zod input
+  // and returns 401 without a valid JWT cookie regardless of Origin.
   app.enableCors({
     origin: (origin, callback) => {
-      // SECURITY: reject requests without an Origin header. Browsers always
-      // send Origin on CORS requests; the absence of one typically means a
-      // server-to-server call (handled outside CORS) or a legacy browser
-      // redirecting to `Origin: null` (an attack vector for CSRF token theft
-      // in older clients). Webhooks (/api/v1/webhooks/*) don't go through
-      // CORS — they validate HMAC signatures instead.
       if (!origin) {
-        return callback(new Error('CORS: origin header required'), false);
+        return callback(null, true);
       }
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
