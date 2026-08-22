@@ -8,12 +8,15 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import { TwoFactorService } from './two-factor.service';
 import { OtpService } from './otp.service';
+import { CaptchaService } from './captcha.service';
+import { LoginAttemptService } from './login-attempt.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AccountThrottlerGuard } from '../../common/guards/login-throttler.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -39,12 +42,18 @@ const COOKIE_OPTS = {
 
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(
     private readonly authService: AuthService,
     private readonly twoFactorService: TwoFactorService,
     private readonly invitationsService: InvitationsService,
     private readonly notificationsService: NotificationsService,
     private readonly otpService: OtpService,
+    // SECURITY D6: CAPTCHA verifier and attempt-counter. Used by /login to
+    // require a Turnstile token after N failed attempts within 15 min.
+    private readonly captchaService: CaptchaService,
+    private readonly loginAttempts: LoginAttemptService,
   ) {}
 
   @Post('register')
@@ -66,13 +75,21 @@ export class AuthController {
           result.user.firstName,
           `${frontendUrl}/verify-email?token=${result.verificationToken}`,
         )
-        .catch(() => undefined);
+        .catch((err) =>
+          this.logger.warn(
+            `Fallo enviando email de verificación a ${result.user.email}: ${err instanceof Error ? err.message : err}`,
+          ),
+        );
     }
     await this.sendWelcomeAfterSignup({
       email: result.user.email,
       firstName: result.user.firstName,
       organizationName: result.user.organizationName,
-    }).catch(() => undefined);
+    }).catch((err) =>
+      this.logger.warn(
+        `Fallo enviando email de bienvenida a ${result.user.email}: ${err instanceof Error ? err.message : err}`,
+      ),
+    );
     return { success: true, data: { user: result.user, accessToken: result.accessToken } };
   }
 
@@ -98,7 +115,11 @@ export class AuthController {
           '', // firstName is unknown (anti-enumeration)
           `${frontendUrl}/verify-email?token=${result.token}`,
         )
-        .catch(() => undefined);
+        .catch((err) =>
+          this.logger.warn(
+            `Fallo reenviando email de verificación a ${email}: ${err instanceof Error ? err.message : err}`,
+          ),
+        );
     }
     return {
       success: true,
@@ -115,25 +136,58 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
     @Body(new ZodPipe(loginSchema)) body: unknown,
   ) {
-    const data = body as any;
-    const result = await this.authService.login(data.email, data.password);
-    if ('requiresTwoFactor' in result) {
-      // Set a 5-minute signed pending token cookie that ONLY /auth/2fa/complete-login
-      // will accept. The SPA still needs to know userId to call complete-login,
-      // but now it can only complete by also presenting this cookie.
-      const maxAge = 5 * 60 * 1000;
-      res.cookie('twofa_pending', result.pendingToken, { ...COOKIE_OPTS, maxAge });
-      return { success: true, data: { requiresTwoFactor: true, userId: result.userId } };
+    const data = body as { email: string; password: string; captchaToken?: string };
+    const ip = req.ip ?? 'unknown';
+
+    // SECURITY D6: if this (ip, email) has accumulated enough failures,
+    // require a fresh Turnstile token before we even check credentials.
+    // The check runs BEFORE bcrypt.compare() so the timing of the response
+    // does not depend on whether the email exists.
+    const needsCaptcha = await this.loginAttempts.shouldRequireCaptcha(ip, data.email);
+    if (needsCaptcha) {
+      await this.captchaService.verifyTurnstile(data.captchaToken, ip);
     }
-    this.setRefreshTokenCookie(res, result.refreshToken);
-    await this.sendLoginAlert(
-      {
-        email: result.user.email,
-        firstName: result.user.firstName,
-      },
-      req.ip,
-    ).catch(() => undefined);
-    return { success: true, data: { user: result.user, accessToken: result.accessToken } };
+
+    try {
+      const result = await this.authService.login(data.email, data.password);
+      // Successful login — clear the failure bucket so the user is not
+      // stuck solving CAPTCHAs after one typo.
+      await this.loginAttempts.recordSuccess(ip, data.email);
+
+      if ('requiresTwoFactor' in result) {
+        // Set a 5-minute signed pending token cookie that ONLY /auth/2fa/complete-login
+        // will accept. The SPA still needs to know userId to call complete-login,
+        // but now it can only complete by also presenting this cookie.
+        const maxAge = 5 * 60 * 1000;
+        res.cookie('twofa_pending', result.pendingToken, { ...COOKIE_OPTS, maxAge });
+        return { success: true, data: { requiresTwoFactor: true, userId: result.userId } };
+      }
+      this.setRefreshTokenCookie(res, result.refreshToken);
+      await this.sendLoginAlert(
+        {
+          email: result.user.email,
+          firstName: result.user.firstName,
+        },
+        ip,
+      ).catch((err) =>
+        this.logger.warn(
+          `Fallo enviando alerta de login a ${result.user.email}: ${err instanceof Error ? err.message : err}`,
+        ),
+      );
+      return { success: true, data: { user: result.user, accessToken: result.accessToken } };
+    } catch (err) {
+      // SECURITY D6: any thrown error from AuthService.login() means the
+      // credentials were wrong (or the account is inactive). Bump the
+      // failure counter so the next attempt past the threshold requires
+      // a CAPTCHA. We do NOT discriminate between "user not found" and
+      // "wrong password" — both increment the same counter, and the
+      // response is the same generic 401 the user already sees.
+      const count = await this.loginAttempts.recordFailure(ip, data.email);
+      this.logger.warn(
+        `Login failed for ${data.email} from ${ip} (attempt #${count} in window)`,
+      );
+      throw err;
+    }
   }
 
   @Post('refresh')
@@ -181,7 +235,11 @@ export class AuthController {
       email: user.email,
       firstName: user.firstName,
       organizationName: user.organization?.name,
-    }).catch(() => undefined);
+    }).catch((err) =>
+      this.logger.warn(
+        `Fallo enviando email de bienvenida por invitación a ${user.email}: ${err instanceof Error ? err.message : err}`,
+      ),
+    );
     return { success: true, data: { message: 'Invitaci��n aceptada exitosamente', user } };
   }
 

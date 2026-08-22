@@ -29,6 +29,12 @@ const nullableDateTime = z
 export const loginSchema = z.object({
   email: z.string().email('Email inválido'),
   password: z.string().min(1, 'Contraseña requerida'),
+  // SECURITY D6: optional Turnstile CAPTCHA token. The server requires it
+  // only after N failed attempts for this (ip, email) within the sliding
+  // window. Always optional on the wire so a fresh visitor never gets
+  // blocked; the backend rejects the request if the counter is past the
+  // threshold and the token is missing or invalid.
+  captchaToken: z.string().optional(),
 });
 
 export const registerSchema = z.object({

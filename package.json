@@ -24,11 +24,11 @@
     "db:studio": "pnpm --filter @nexa/database db:studio"
   },
   "devDependencies": {
-    "turbo": "^2.3.0",
-    "prettier": "^3.4.0",
-    "prettier-plugin-tailwindcss": "^0.6.0",
-    "husky": "^9.1.0",
-    "lint-staged": "^15.2.0"
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.2",
+    "prettier": "^3.9.6",
+    "prettier-plugin-tailwindcss": "^0.6.14",
+    "turbo": "^2.10.11"
   },
   "packageManager": "pnpm@9.15.0",
   "engines": {

@@ -31,7 +31,7 @@ type User = {
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, captchaToken?: string) => Promise<void>;
   register: (data: {
     email: string;
     password: string;
@@ -102,10 +102,14 @@ export function useAuthProvider() {
   }, [handleSessionExpired]);
 
   const login = useCallback(
-    async (email: string, password: string) => {
+    async (email: string, password: string, captchaToken?: string) => {
       const response = await api.post<{ success: boolean; data: any }>('/auth/login', {
         email,
         password,
+        // SECURITY D6: forward the Turnstile token if the widget rendered.
+        // The server only requires it after N failed attempts; on a clean
+        // session the field is ignored.
+        ...(captchaToken ? { captchaToken } : {}),
       });
       if (response.success) {
         if (response.data.requiresTwoFactor) {

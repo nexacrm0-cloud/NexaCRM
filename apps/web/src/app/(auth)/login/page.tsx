@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { Loader2, KeyRound, Mail } from 'lucide-react';
+import { Turnstile } from '@marsidev/react-turnstile';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +21,12 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
+  // SECURITY D6: turn the CAPTCHA widget on after the first failed login.
+  // The server decides authoritatively; the client just stops bouncing the
+  // user back with 401s by surfacing the challenge up front.
+  const [showCaptcha, setShowCaptcha] = useState(false);
+  const captchaTokenRef = useRef<string | undefined>(undefined);
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   const onPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,9 +34,16 @@ export default function LoginPage() {
     setInfo('');
     setLoading(true);
     try {
-      await login(email, password);
+      await login(email, password, captchaTokenRef.current);
+      // Reset captcha state on success.
+      setShowCaptcha(false);
+      captchaTokenRef.current = undefined;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
+      // SECURITY D6: after the first failure, surface the CAPTCHA widget.
+      // The server only enforces it past the threshold, but presenting it
+      // proactively reduces wasted round-trips for the user.
+      setShowCaptcha(true);
     } finally {
       setLoading(false);
     }
@@ -135,6 +149,28 @@ export default function LoginPage() {
               required
             />
           </div>
+          {/* SECURITY D6: Turnstile widget renders only after a failure so
+              first-time legitimate users see no friction. Token is captured
+              via ref and forwarded to /auth/login. If NEXT_PUBLIC_TURNSTILE_SITE_KEY
+              is unset (dev), the widget is silently skipped — the server
+              then enforces CAPTCHA in prod-only via TURNSTILE_SECRET_KEY. */}
+          {showCaptcha && turnstileSiteKey && (
+            <div className="flex justify-center">
+              <Turnstile
+                siteKey={turnstileSiteKey}
+                onSuccess={(token) => {
+                  captchaTokenRef.current = token;
+                }}
+                onError={() => {
+                  captchaTokenRef.current = undefined;
+                }}
+                onExpire={() => {
+                  captchaTokenRef.current = undefined;
+                }}
+                options={{ theme: 'light', size: 'flexible' }}
+              />
+            </div>
+          )}
           <Button type="submit" variant="ink" className="w-full" disabled={loading}>
             {loading ? (
               <>

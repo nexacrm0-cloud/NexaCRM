@@ -5,6 +5,8 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { TwoFactorService } from './two-factor.service';
 import { OtpService } from './otp.service';
+import { CaptchaService } from './captcha.service';
+import { LoginAttemptService } from './login-attempt.service';
 import { JwtStrategy } from '../../common/strategies/jwt.strategy';
 import { InvitationsModule } from '../invitations/invitations.module';
 import { NotificationsModule } from '../notifications/notifications.module';
@@ -20,7 +22,21 @@ import { NotificationsModule } from '../notifications/notifications.module';
     NotificationsModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, TwoFactorService, OtpService, JwtStrategy],
-  exports: [AuthService, TwoFactorService, OtpService, JwtModule],
+  providers: [
+    AuthService,
+    TwoFactorService,
+    OtpService,
+    CaptchaService,
+    LoginAttemptService,
+    JwtStrategy,
+  ],
+  exports: [
+    AuthService,
+    TwoFactorService,
+    OtpService,
+    CaptchaService,
+    LoginAttemptService,
+    JwtModule,
+  ],
 })
 export class AuthModule {}
