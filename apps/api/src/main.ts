@@ -17,12 +17,13 @@ function validateEnv() {
     ? [
         'JWT_SECRET',
         'JWT_REFRESH_SECRET',
+        'JWT_2FA_PENDING_SECRET',
         'DATABASE_URL',
         'INTERNAL_API_KEY',
         'WHATSAPP_APP_SECRET',
         'FRONTEND_URL',
       ]
-    : ['JWT_SECRET', 'JWT_REFRESH_SECRET', 'DATABASE_URL'];
+    : ['JWT_SECRET', 'JWT_REFRESH_SECRET', 'JWT_2FA_PENDING_SECRET', 'DATABASE_URL'];
   const missing = required.filter((v) => !process.env[v]);
   if (missing.length > 0) {
     throw new Error(`FALTAN variables de entorno críticas: ${missing.join(', ')}`);
@@ -32,15 +33,18 @@ function validateEnv() {
   const knownPlaceholders = new Set([
     'your-super-secret-jwt-key-change-in-production',
     'your-super-secret-refresh-key-change-in-production',
+    'your-super-secret-2fa-pending-key-change-in-production',
     'change-this-in-production',
     'dev-jwt-secret-change-in-production',
     'dev-refresh-secret-change-in-production',
+    'dev-2fa-pending-secret-change-in-production',
     'sk-your-openai-api-key',
     'nexa_whatsapp_verify_2026',
   ]);
   for (const key of [
     'JWT_SECRET',
     'JWT_REFRESH_SECRET',
+    'JWT_2FA_PENDING_SECRET',
     'INTERNAL_API_KEY',
     'WHATSAPP_APP_SECRET',
     'WHATSAPP_VERIFY_TOKEN',
@@ -59,8 +63,17 @@ function validateEnv() {
   if ((process.env.JWT_REFRESH_SECRET?.length ?? 0) < 32) {
     throw new Error('JWT_REFRESH_SECRET debe tener al menos 32 caracteres');
   }
+  if ((process.env.JWT_2FA_PENDING_SECRET?.length ?? 0) < 32) {
+    throw new Error('JWT_2FA_PENDING_SECRET debe tener al menos 32 caracteres');
+  }
   if (process.env.JWT_SECRET === process.env.JWT_REFRESH_SECRET) {
     throw new Error('JWT_SECRET y JWT_REFRESH_SECRET deben ser distintos');
+  }
+  if (process.env.JWT_SECRET === process.env.JWT_2FA_PENDING_SECRET) {
+    throw new Error('JWT_SECRET y JWT_2FA_PENDING_SECRET deben ser distintos');
+  }
+  if (process.env.JWT_REFRESH_SECRET === process.env.JWT_2FA_PENDING_SECRET) {
+    throw new Error('JWT_REFRESH_SECRET y JWT_2FA_PENDING_SECRET deben ser distintos');
   }
   if (isProd && process.env.FRONTEND_URL?.startsWith('http://localhost')) {
     throw new Error('FRONTEND_URL no debe ser localhost en producción');
@@ -197,8 +210,14 @@ async function bootstrap() {
   }
   app.enableCors({
     origin: (origin, callback) => {
+      // SECURITY: reject requests without an Origin header. Browsers always
+      // send Origin on CORS requests; the absence of one typically means a
+      // server-to-server call (handled outside CORS) or a legacy browser
+      // redirecting to `Origin: null` (an attack vector for CSRF token theft
+      // in older clients). Webhooks (/api/v1/webhooks/*) don't go through
+      // CORS — they validate HMAC signatures instead.
       if (!origin) {
-        return callback(null, true);
+        return callback(new Error('CORS: origin header required'), false);
       }
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);

@@ -212,10 +212,16 @@ export class AuthService {
     // password check (CR-02 mitigation): the caller must present both the
     // pending token AND a valid TOTP. Without this, an attacker could call
     // /auth/2fa/complete-login with just a userId and brute-force TOTP.
+    //
+    // SECURITY D5: signed with a dedicated JWT_2FA_PENDING_SECRET instead of
+    // JWT_REFRESH_SECRET. Keeping the 2FA pending token on its own secret
+    // ensures that a leaked refresh secret cannot be reused to forge a
+    // pending token (which would let the attacker bypass the password
+    // check entirely and just brute-force the TOTP).
     if (user.isTwoFactorEnabled) {
       const pendingToken = await this.jwtService.signAsync(
         { sub: user.id, twofa: true },
-        { secret: process.env.JWT_REFRESH_SECRET, expiresIn: '5m' },
+        { secret: process.env.JWT_2FA_PENDING_SECRET, expiresIn: '5m' },
       );
       return {
         requiresTwoFactor: true,
@@ -257,13 +263,17 @@ export class AuthService {
     // SECURITY CR-02: a pending login token signed by our own /login flow
     // must verify before any TOTP is probed. This binds the second factor to
     // a previously validated password.
+    //
+    // SECURITY D5: verified against JWT_2FA_PENDING_SECRET (dedicated, not
+    // shared with the refresh secret). See the matching comment in
+    // AuthService.login() for the rationale.
     if (!pendingToken) {
       throw new UnauthorizedException('Pending login token requerido');
     }
     let pendingSub: string;
     try {
       const pending = this.jwtService.verify(pendingToken, {
-        secret: process.env.JWT_REFRESH_SECRET,
+        secret: process.env.JWT_2FA_PENDING_SECRET,
       });
       if (!pending?.twofa || pending.sub !== userId) {
         throw new UnauthorizedException('Pending login token inválido');
