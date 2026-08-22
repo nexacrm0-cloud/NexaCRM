@@ -151,24 +151,33 @@ export default function LoginPage() {
           </div>
           {/* SECURITY D6: Turnstile widget renders only after a failure so
               first-time legitimate users see no friction. Token is captured
-              via ref and forwarded to /auth/login. If NEXT_PUBLIC_TURNSTILE_SITE_KEY
-              is unset (dev), the widget is silently skipped — the server
-              then enforces CAPTCHA in prod-only via TURNSTILE_SECRET_KEY. */}
-          {showCaptcha && turnstileSiteKey && (
-            <div className="flex justify-center">
-              <Turnstile
-                siteKey={turnstileSiteKey}
-                onSuccess={(token) => {
-                  captchaTokenRef.current = token;
-                }}
-                onError={() => {
-                  captchaTokenRef.current = undefined;
-                }}
-                onExpire={() => {
-                  captchaTokenRef.current = undefined;
-                }}
-                options={{ theme: 'light', size: 'flexible' }}
-              />
+              via ref and forwarded to /auth/login.
+              If NEXT_PUBLIC_TURNSTILE_SITE_KEY is unset, show a clear hint
+              instead of failing silently — otherwise the user sees a 400
+              "CAPTCHA token requerido" and can't tell that the server is
+              configured but the build env var is missing. */}
+          {showCaptcha && (
+            <div className="flex flex-col items-center gap-2">
+              {turnstileSiteKey ? (
+                <Turnstile
+                  siteKey={turnstileSiteKey}
+                  onSuccess={(token) => {
+                    captchaTokenRef.current = token;
+                  }}
+                  onError={() => {
+                    captchaTokenRef.current = undefined;
+                  }}
+                  onExpire={() => {
+                    captchaTokenRef.current = undefined;
+                  }}
+                  options={{ theme: 'light', size: 'flexible' }}
+                />
+              ) : (
+                <div className="border-alizarin/40 bg-alizarin/10 eyebrow text-alizarin w-full border px-3 py-2 text-center">
+                  CAPTCHA no configurado en el servidor (NEXT_PUBLIC_TURNSTILE_SITE_KEY).
+                  Contactá a soporte si ves este mensaje.
+                </div>
+              )}
             </div>
           )}
           <Button type="submit" variant="ink" className="w-full" disabled={loading}>

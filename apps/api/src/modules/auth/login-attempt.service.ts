@@ -24,7 +24,15 @@ export class LoginAttemptService {
   // SECURITY D6: trigger CAPTCHA after this many failures within WINDOW_SECONDS.
   // Set conservatively — false negatives (let an attacker slip through) are
   // worse than false positives (annoy a legitimate user with a CAPTCHA once).
-  private readonly THRESHOLD = 3;
+  //
+  // Override via CAPTCHA_THRESHOLD env var for testing / gradual rollout.
+  // Useful while you're setting up the widget: set it to 999 in prod to
+  // effectively disable, then lower it to 3 once the integration is
+  // verified end-to-end.
+  private readonly THRESHOLD = (() => {
+    const fromEnv = parseInt(process.env.CAPTCHA_THRESHOLD ?? '', 10);
+    return Number.isFinite(fromEnv) && fromEnv > 0 ? fromEnv : 3;
+  })();
 
   constructor() {
     const url = process.env.REDIS_URL;
