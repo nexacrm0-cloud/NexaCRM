@@ -32,20 +32,30 @@ export class NotificationsService {
       eyebrow: 'NEXA · Equipo',
       title: 'Te invitaron a un workspace',
       bodyHtml: `
-        <p style="font-size:14px;line-height:1.65;color:#3d3832;margin:0 0 20px 0"><strong>${escapeHtml(invitedByName)}</strong> te ha invitado a unirte a <strong>${escapeHtml(organizationName)}</strong> en Nexa CRM.</p>
-        <p style="font-size:14px;line-height:1.65;color:#3d3832;margin:0 0 28px 0">Hacé clic en el siguiente enlace para aceptar la invitación:</p>
+        <p style="font-size:14px;line-height:1.65;color:#605C57;margin:0 0 20px 0"><strong>${escapeHtml(invitedByName)}</strong> te invitó a formar parte del equipo de <strong>${escapeHtml(organizationName)}</strong> en Nexa CRM.</p>
+        <p style="font-size:14px;line-height:1.65;color:#605C57;margin:0 0 28px 0">Al aceptar, vas a tener acceso al workspace compartido con clientes, oportunidades, presupuestos y todas las herramientas del CRM.</p>
         <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 28px 0">
           <tr>
-            <td style="background-color:#1a1a1a;border-radius:8px">
-              <a href="${link}" style="display:inline-block;padding:14px 32px;color:#fffefb;font-size:14px;font-weight:600;text-decoration:none;letter-spacing:0.02em">Aceptar invitación</a>
+            <td style="background-color:#FF5E1F;border-radius:8px">
+              <a href="${link}" style="display:inline-block;padding:14px 32px;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;letter-spacing:0.02em">Aceptar invitación</a>
             </td>
           </tr>
         </table>
-        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 20px 0">
-          <tr><td style="border-top:1px solid #e8e4dc;font-size:0;line-height:0">&nbsp;</td></tr>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:#F5F0E9;border-radius:8px;margin:0 0 24px 0">
+          <tr>
+            <td style="padding:16px">
+              <p style="font-size:12px;color:#9E9A94;margin:0 0 8px 0;letter-spacing:0.04em;text-transform:uppercase;font-weight:600">Qué incluye</p>
+              <p style="font-size:13px;color:#605C57;margin:0 0 4px 0">· Acceso completo al CRM del equipo</p>
+              <p style="font-size:13px;color:#605C57;margin:0 0 4px 0">· Colaboración en tiempo real</p>
+              <p style="font-size:13px;color:#605C57;margin:0">· Automatizaciones y reportes compartidos</p>
+            </td>
+          </tr>
         </table>
-        <p style="font-size:12px;color:#a8a094;margin:0 0 6px 0">Este enlace expirará en 7 días.</p>
-        <p style="font-size:12px;color:#a8a094;margin:0">Si no esperabas esta invitación, ignora este mensaje.</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px 0">
+          <tr><td style="border-top:1px solid #DDD0C1;font-size:0;line-height:0">&nbsp;</td></tr>
+        </table>
+        <p style="font-size:12px;color:#9E9A94;margin:0 0 6px 0">Este enlace expira en 7 días.</p>
+        <p style="font-size:12px;color:#9E9A94;margin:0">Si no esperabas esta invitación, ignorá este mensaje.</p>
       `,
     });
     return this.sendEmail({ to, subject, html });
@@ -67,19 +77,26 @@ export class NotificationsService {
       eyebrow: 'NEXA · Automatizaciones',
       title: 'Tu automatización está lista',
       bodyHtml: `
-        <p style="font-size:14px;line-height:1.65;color:#3d3832;margin:0 0 20px 0"><strong>${escapeHtml(invitedByName)}</strong> te provisionó <strong>${escapeHtml(workflowName)}</strong> en tu workspace <strong>${escapeHtml(organizationName)}</strong> de Nexa CRM.</p>
-        <p style="font-size:13px;color:#7c7565;margin:0 0 28px 0">Se va a disparar cuando ocurra el evento <code style="background:#f4f1ec;padding:3px 8px;border-radius:4px;font-size:12px;color:#3d3832">${escapeHtml(workflowTrigger)}</code>.</p>
-        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 28px 0">
+        <p style="font-size:14px;line-height:1.65;color:#605C57;margin:0 0 20px 0"><strong>${escapeHtml(invitedByName)}</strong> te provisionó <strong>${escapeHtml(workflowName)}</strong> en tu workspace <strong>${escapeHtml(organizationName)}</strong> de Nexa CRM.</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:#F5F0E9;border-radius:8px;margin:0 0 24px 0">
           <tr>
-            <td style="background-color:#1a1a1a;border-radius:8px">
-              <a href="${link}" style="display:inline-block;padding:14px 32px;color:#fffefb;font-size:14px;font-weight:600;text-decoration:none;letter-spacing:0.02em">Entrar a mi workspace</a>
+            <td style="padding:16px">
+              <p style="font-size:13px;color:#605C57;margin:0 0 4px 0"><strong>Trigger:</strong> <code style="background:#EDE5D8;padding:2px 6px;border-radius:4px;font-size:12px">${escapeHtml(workflowTrigger)}</code></p>
+              <p style="font-size:13px;color:#605C57;margin:0"><strong>Estado:</strong> <span style="color:#1F6B38">Activa</span></p>
             </td>
           </tr>
         </table>
-        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 20px 0">
-          <tr><td style="border-top:1px solid #e8e4dc;font-size:0;line-height:0">&nbsp;</td></tr>
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 28px 0">
+          <tr>
+            <td style="background-color:#FF5E1F;border-radius:8px">
+              <a href="${link}" style="display:inline-block;padding:14px 32px;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;letter-spacing:0.02em">Entrar a mi workspace</a>
+            </td>
+          </tr>
         </table>
-        <p style="font-size:12px;color:#a8a094;margin:0">Si no esperabas este mail, ignorálo. Si no estás seguro, comunicate con quien te invitó.</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px 0">
+          <tr><td style="border-top:1px solid #DDD0C1;font-size:0;line-height:0">&nbsp;</td></tr>
+        </table>
+        <p style="font-size:12px;color:#9E9A94;margin:0">Si no esperabas este mail, ignorálo. Si no estás seguro, comunicate con quien te invitó.</p>
       `,
     });
     return this.sendEmail({ to, subject, html });
@@ -91,19 +108,29 @@ export class NotificationsService {
       eyebrow: 'NEXA · Seguridad',
       title: 'Restablecer contraseña',
       bodyHtml: `
-        <p style="font-size:14px;line-height:1.65;color:#3d3832;margin:0 0 20px 0">Recibimos un pedido para restablecer la contraseña asociada a esta casilla.</p>
-        <p style="font-size:14px;line-height:1.65;color:#3d3832;margin:0 0 28px 0">Si lo hiciste vos, ingresá al siguiente enlace y elegí una nueva contraseña. Si no, ignorá este mensaje.</p>
+        <p style="font-size:14px;line-height:1.65;color:#605C57;margin:0 0 20px 0">Recibimos un pedido para restablecer la contraseña de tu cuenta en Nexa CRM.</p>
+        <p style="font-size:14px;line-height:1.65;color:#605C57;margin:0 0 28px 0">Hacé clic en el botón de abajo para elegir una nueva contraseña. Si no solicitaste este cambio, podés ignorar este mensaje de forma segura.</p>
         <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 28px 0">
           <tr>
-            <td style="background-color:#1a1a1a;border-radius:8px">
-              <a href="${resetLink}" style="display:inline-block;padding:14px 32px;color:#fffefb;font-size:14px;font-weight:600;text-decoration:none;letter-spacing:0.02em">Restablecer contraseña</a>
+            <td style="background-color:#FF5E1F;border-radius:8px">
+              <a href="${resetLink}" style="display:inline-block;padding:14px 32px;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;letter-spacing:0.02em">Restablecer contraseña</a>
             </td>
           </tr>
         </table>
-        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 20px 0">
-          <tr><td style="border-top:1px solid #e8e4dc;font-size:0;line-height:0">&nbsp;</td></tr>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:#F5F0E9;border-radius:8px;margin:0 0 24px 0">
+          <tr>
+            <td style="padding:16px">
+              <p style="font-size:12px;color:#9E9A94;margin:0 0 8px 0;letter-spacing:0.04em;text-transform:uppercase;font-weight:600">Recomendaciones de seguridad</p>
+              <p style="font-size:13px;color:#605C57;margin:0 0 4px 0">· Usá una contraseña larga (mínimo 12 caracteres)</p>
+              <p style="font-size:13px;color:#605C57;margin:0 0 4px 0">· Combiná letras, números y símbolos</p>
+              <p style="font-size:13px;color:#605C57;margin:0">· No reutilizá contraseñas de otros servicios</p>
+            </td>
+          </tr>
         </table>
-        <p style="font-size:12px;color:#a8a094;margin:0">Este enlace expira en 1 hora.</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px 0">
+          <tr><td style="border-top:1px solid #DDD0C1;font-size:0;line-height:0">&nbsp;</td></tr>
+        </table>
+        <p style="font-size:12px;color:#9E9A94;margin:0">Este enlace expira en 1 hora. Si no fuiste vos, cambiá tu contraseña lo antes posible.</p>
       `,
     });
     return this.sendEmail({ to, subject, html });
@@ -116,19 +143,29 @@ export class NotificationsService {
       eyebrow: 'NEXA · Acceso',
       title: greeting,
       bodyHtml: `
-        <p style="font-size:14px;line-height:1.65;color:#3d3832;margin:0 0 20px 0">Confirmá que esta es tu casilla de correo para activar todas las funciones de tu cuenta.</p>
+        <p style="font-size:14px;line-height:1.65;color:#605C57;margin:0 0 20px 0">Bienvenido a Nexa CRM. Para activar tu cuenta y empezar a usar todas las funciones, confirmá que esta es tu casilla de correo.</p>
         <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 28px 0">
           <tr>
-            <td style="background-color:#1a1a1a;border-radius:8px">
-              <a href="${verifyLink}" style="display:inline-block;padding:14px 32px;color:#fffefb;font-size:14px;font-weight:600;text-decoration:none;letter-spacing:0.02em">Verificar email</a>
+            <td style="background-color:#FF5E1F;border-radius:8px">
+              <a href="${verifyLink}" style="display:inline-block;padding:14px 32px;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;letter-spacing:0.02em">Verificar mi email</a>
             </td>
           </tr>
         </table>
-        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 20px 0">
-          <tr><td style="border-top:1px solid #e8e4dc;font-size:0;line-height:0">&nbsp;</td></tr>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:#F5F0E9;border-radius:8px;margin:0 0 24px 0">
+          <tr>
+            <td style="padding:16px">
+              <p style="font-size:12px;color:#9E9A94;margin:0 0 8px 0;letter-spacing:0.04em;text-transform:uppercase;font-weight:600">¿Qué obtenés al verificar?</p>
+              <p style="font-size:13px;color:#605C57;margin:0 0 4px 0">· Acceso completo a tu dashboard y herramientas</p>
+              <p style="font-size:13px;color:#605C57;margin:0 0 4px 0">· Notificaciones de actividad y automatizaciones</p>
+              <p style="font-size:13px;color:#605C57;margin:0">· Soporte prioritario ante cualquier consulta</p>
+            </td>
+          </tr>
         </table>
-        <p style="font-size:12px;color:#a8a094;margin:0 0 6px 0">Este enlace expira en 7 días.</p>
-        <p style="font-size:12px;color:#a8a094;margin:0">Si no creaste una cuenta en Nexa CRM, ignorá este mensaje.</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px 0">
+          <tr><td style="border-top:1px solid #DDD0C1;font-size:0;line-height:0">&nbsp;</td></tr>
+        </table>
+        <p style="font-size:12px;color:#9E9A94;margin:0 0 6px 0">Este enlace expira en 7 días.</p>
+        <p style="font-size:12px;color:#9E9A94;margin:0">Si no creaste una cuenta en Nexa CRM, ignorá este mensaje.</p>
       `,
     });
     return this.sendEmail({ to, subject, html });
@@ -147,23 +184,34 @@ export class NotificationsService {
       : `Tu Nexa CRM está listo, ${firstName}`;
     const onwardCopy = isInvitation
       ? `Te uniste a <strong>${escapeHtml(organizationName)}</strong>. Ya tenés acceso al workspace y podés empezar a usar todas las funciones.`
-      : `Esta es la base de tu CRM. Clientes, oportunidades, presupuestos y automatizaciones están listos para usarse desde ya. La arrancaste.`;
+      : `Tu espacio de trabajo en Nexa CRM está listo. Clientes, oportunidades, presupuestos y automatizaciones están configurados y esperándote.`;
     const html = emailShell({
       eyebrow: 'NEXA · CRM',
       title: `Hola, ${escapeHtml(firstName)}`,
       bodyHtml: `
-        <p style="font-size:14px;line-height:1.65;color:#3d3832;margin:0 0 28px 0">${onwardCopy}</p>
-        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 28px 0">
+        <p style="font-size:14px;line-height:1.65;color:#605C57;margin:0 0 28px 0">${onwardCopy}</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 32px 0">
           <tr>
-            <td style="background-color:#1a1a1a;border-radius:8px">
-              <a href="${loginUrl}" style="display:inline-block;padding:14px 32px;color:#fffefb;font-size:14px;font-weight:600;text-decoration:none;letter-spacing:0.02em">Entrar a Nexa CRM</a>
+            <td style="background-color:#FF5E1F;border-radius:8px">
+              <a href="${loginUrl}" style="display:inline-block;padding:14px 32px;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;letter-spacing:0.02em">Entrar a Nexa CRM</a>
             </td>
           </tr>
         </table>
-        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 20px 0">
-          <tr><td style="border-top:1px solid #e8e4dc;font-size:0;line-height:0">&nbsp;</td></tr>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:#F5F0E9;border-radius:8px;margin:0 0 24px 0">
+          <tr>
+            <td style="padding:16px">
+              <p style="font-size:12px;color:#9E9A94;margin:0 0 10px 0;letter-spacing:0.04em;text-transform:uppercase;font-weight:600">Primeros pasos</p>
+              <p style="font-size:13px;color:#605C57;margin:0 0 6px 0">· <strong>Cargá tus contactos</strong> — importá desde CSV o agregalos uno a uno</p>
+              <p style="font-size:13px;color:#605C57;margin:0 0 6px 0">· <strong>Creá tu primer presupuesto</strong> — usá las plantillas prediseñadas</p>
+              <p style="font-size:13px;color:#605C57;margin:0 0 6px 0">· <strong>Activá automatizaciones</strong> — conectá WhatsApp, Slack o email</p>
+              <p style="font-size:13px;color:#605C57;margin:0">· <strong>Invitá a tu equipo</strong> — trabajá en conjunto desde el mismo workspace</p>
+            </td>
+          </tr>
         </table>
-        <p style="font-size:12px;color:#a8a094;margin:0">Si necesitás ayuda para arrancar, la sección <em>Automatizaciones</em> tiene plantillas listas para WhatsApp, Slack y Mailchimp.</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px 0">
+          <tr><td style="border-top:1px solid #DDD0C1;font-size:0;line-height:0">&nbsp;</td></tr>
+        </table>
+        <p style="font-size:12px;color:#9E9A94;margin:0">Si necesitás ayuda, respondé este email o visitá nuestra documentación.</p>
       `,
     });
     return this.sendEmail({ to, subject, html });
@@ -189,12 +237,20 @@ export class NotificationsService {
       eyebrow: 'NEXA · Suscripciones',
       title: `${escapeHtml(templateName)} está activa`,
       bodyHtml: `
-        <p style="font-size:14px;line-height:1.65;color:#3d3832;margin:0 0 20px 0">Hola, ${escapeHtml(firstName)}, tu suscripción ya está activa y cobraremos <strong>${escapeHtml(formatted)}/mes</strong>.</p>
-        <p style="font-size:14px;line-height:1.65;color:#3d3832;margin:0 0 28px 0">El próximo ciclo vence el <strong>${escapeHtml(until)}</strong>.</p>
-        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 20px 0">
-          <tr><td style="border-top:1px solid #e8e4dc;font-size:0;line-height:0">&nbsp;</td></tr>
+        <p style="font-size:14px;line-height:1.65;color:#605C57;margin:0 0 20px 0">Hola, ${escapeHtml(firstName)}, tu suscripción ya está activa.</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:#F5F0E9;border-radius:8px;margin:0 0 24px 0">
+          <tr>
+            <td style="padding:16px">
+              <p style="font-size:13px;color:#605C57;margin:0 0 4px 0"><strong>Plan:</strong> ${escapeHtml(templateName)}</p>
+              <p style="font-size:13px;color:#605C57;margin:0 0 4px 0"><strong>Monto:</strong> ${escapeHtml(formatted)}/mes</p>
+              <p style="font-size:13px;color:#605C57;margin:0"><strong>Próximo cobro:</strong> ${escapeHtml(until)}</p>
+            </td>
+          </tr>
         </table>
-        <p style="font-size:12px;color:#a8a094;margin:0">Si necesitás cancelar, lo hacés desde tu panel en <em>Automatizaciones → Mis suscripciones</em>.</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px 0">
+          <tr><td style="border-top:1px solid #DDD0C1;font-size:0;line-height:0">&nbsp;</td></tr>
+        </table>
+        <p style="font-size:12px;color:#9E9A94;margin:0">Podés gestionar tu suscripción desde <em>Automatizaciones → Mis suscripciones</em>.</p>
       `,
     });
     return this.sendEmail({ to, subject, html });
@@ -212,9 +268,20 @@ export class NotificationsService {
       eyebrow: 'NEXA · Suscripciones',
       title: 'Pausamos tu automatización',
       bodyHtml: `
-        <p style="font-size:14px;line-height:1.65;color:#3d3832;margin:0 0 20px 0">Hola, ${escapeHtml(firstName)}, pausamos <strong>${escapeHtml(templateName)}</strong> porque no pudimos procesar el pago.</p>
-        <p style="font-size:13px;color:#7c7565;margin:0 0 28px 0">Motivo: ${escapeHtml(reason)}</p>
-        <p style="font-size:14px;line-height:1.65;color:#3d3832;margin:0">Te avisemos para que actualices el medio de pago o un técnico te contacte.</p>
+        <p style="font-size:14px;line-height:1.65;color:#605C57;margin:0 0 20px 0">Hola, ${escapeHtml(firstName)}, pausamos <strong>${escapeHtml(templateName)}</strong> porque no pudimos procesar el pago.</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FEF2F2;border-radius:8px;margin:0 0 24px 0">
+          <tr>
+            <td style="padding:16px">
+              <p style="font-size:12px;color:#9E9A94;margin:0 0 6px 0;letter-spacing:0.04em;text-transform:uppercase;font-weight:600">Motivo</p>
+              <p style="font-size:13px;color:#605C57;margin:0">${escapeHtml(reason)}</p>
+            </td>
+          </tr>
+        </table>
+        <p style="font-size:14px;line-height:1.65;color:#605C57;margin:0 0 24px 0">Para reactivarla, actualizá tu medio de pago desde <strong>Settings → Suscripciones</strong> o contactanos para asistencia.</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px 0">
+          <tr><td style="border-top:1px solid #DDD0C1;font-size:0;line-height:0">&nbsp;</td></tr>
+        </table>
+        <p style="font-size:12px;color:#9E9A94;margin:0">La automatización permanecerá pausa hasta que se resuelva el problema de pago.</p>
       `,
     });
     return this.sendEmail({ to, subject, html });
@@ -247,13 +314,13 @@ export class NotificationsService {
     const ok = status === 'COMPLETED';
     const title = ok ? `Resumen: ${agentName} completó su tarea` : `Falló ${agentName}`;
     const eyebrow = 'NEXA · AI Agents';
-    const accent = ok ? '#16a34a' : '#dc2626';
+    const accent = ok ? '#1F6B38' : '#C42218';
     const dur = typeof durationMs === 'number' ? `${(durationMs / 1000).toFixed(1)}s` : '—';
     const summaryHtml = summary
-      ? `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 24px 0"><tr><td style="background:#f4f1ec;border:1px solid #e8e4dc;border-radius:8px;padding:16px"><pre style="font-family:'Courier New',Courier,monospace;font-size:12px;line-height:1.6;color:#3d3832;margin:0;white-space:pre-wrap">${escapeHtml(summary)}</pre></td></tr></table>`
+      ? `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 24px 0"><tr><td style="background:#F5F0E9;border:1px solid #DDD0C1;border-radius:8px;padding:16px"><pre style="font-family:'Courier New',Courier,monospace;font-size:12px;line-height:1.6;color:#1A1A1A;margin:0;white-space:pre-wrap">${escapeHtml(summary)}</pre></td></tr></table>`
       : '';
     const errorHtml = error
-      ? `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 24px 0"><tr><td style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px"><pre style="font-family:'Courier New',Courier,monospace;font-size:12px;line-height:1.6;color:#7f1d1d;margin:0;white-space:pre-wrap">${escapeHtml(error)}</pre></td></tr></table>`
+      ? `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 24px 0"><tr><td style="background:#FEF2F2;border:1px solid #F5D6D2;border-radius:8px;padding:16px"><pre style="font-family:'Courier New',Courier,monospace;font-size:12px;line-height:1.6;color:#7f1d1d;margin:0;white-space:pre-wrap">${escapeHtml(error)}</pre></td></tr></table>`
       : '';
     const cta = dashboardsUrl
       ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 24px 0"><tr><td style="background-color:${accent};border-radius:8px"><a href="${dashboardsUrl}" style="display:inline-block;padding:14px 32px;color:#fff;font-size:14px;font-weight:600;text-decoration:none;letter-spacing:0.02em">Ver en CRM</a></td></tr></table>`
@@ -262,15 +329,22 @@ export class NotificationsService {
       eyebrow: `${eyebrow} · ${agentType}`,
       title: `${escapeHtml(title)}`,
       bodyHtml: `
-        <p style="font-size:14px;line-height:1.65;color:#3d3832;margin:0 0 8px 0">Hola, ${escapeHtml(firstName)}. ${escapeHtml(agentName)} terminó de procesarse por el evento <strong>${escapeHtml(eventName)}</strong>.</p>
-        <p style="font-size:13px;color:#7c7565;margin:0 0 24px 0">Estado: <strong style="color:${accent}">${ok ? 'OK' : 'FAILED'}</strong> · Duración: ${dur}</p>
+        <p style="font-size:14px;line-height:1.65;color:#605C57;margin:0 0 8px 0">Hola, ${escapeHtml(firstName)}. ${escapeHtml(agentName)} terminó de procesarse por el evento <strong>${escapeHtml(eventName)}</strong>.</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:#F5F0E9;border-radius:8px;margin:0 0 24px 0">
+          <tr>
+            <td style="padding:16px">
+              <p style="font-size:13px;color:#605C57;margin:0 0 4px 0"><strong>Estado:</strong> <span style="color:${accent}">${ok ? 'Completado' : 'Fallido'}</span></p>
+              <p style="font-size:13px;color:#605C57;margin:0"><strong>Duración:</strong> ${dur}</p>
+            </td>
+          </tr>
+        </table>
         ${summaryHtml}
         ${errorHtml}
         ${cta}
         <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px 0">
-          <tr><td style="border-top:1px solid #e8e4dc;font-size:0;line-height:0">&nbsp;</td></tr>
+          <tr><td style="border-top:1px solid #DDD0C1;font-size:0;line-height:0">&nbsp;</td></tr>
         </table>
-        <p style="font-size:12px;color:#a8a094;margin:0">Si querés cambiar a qué eventos este agente responde, editá la configuración del agente.</p>
+        <p style="font-size:12px;color:#9E9A94;margin:0">Si querés cambiar a qué eventos este agente responde, editá la configuración del agente.</p>
       `,
     });
     const subject = ok
@@ -287,6 +361,7 @@ export class NotificationsService {
     expiresInMinutes: number;
   }) {
     const { to, firstName, code, purpose, expiresInMinutes } = opts;
+    const purposeLabel = purpose === 'login' ? 'iniciar sesión' : 'restablecer tu contraseña';
     const subject =
       purpose === 'login'
         ? `Tu código de acceso a Nexa CRM`
@@ -297,24 +372,33 @@ export class NotificationsService {
       eyebrow: 'NEXA · Acceso',
       title: `Hola, ${escapeHtml(firstName)}`,
       bodyHtml: `
-        <p style="font-size:14px;line-height:1.65;color:#3d3832;margin:0 0 28px 0">Ingresá este código para entrar a tu cuenta:</p>
+        <p style="font-size:14px;line-height:1.65;color:#605C57;margin:0 0 24px 0">Usá el siguiente código para ${purposeLabel} en tu cuenta de Nexa CRM:</p>
         <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
           <tr>
             <td align="center" style="padding:0 0 28px 0">
               <table role="presentation" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td style="background-color:#f4f1ec;border:1px solid #e8e4dc;border-radius:12px;padding:20px 36px">
-                    <span style="font-family:'Courier New',Courier,monospace;font-size:36px;font-weight:700;letter-spacing:10px;color:#1a1a1a">${escapeHtml(code)}</span>
+                  <td style="background-color:#F5F0E9;border:1px solid #DDD0C1;border-radius:12px;padding:20px 40px">
+                    <span style="font-family:'Courier New',Courier,monospace;font-size:36px;font-weight:700;letter-spacing:10px;color:#1A1A1A">${escapeHtml(code)}</span>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
         </table>
-        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 20px 0">
-          <tr><td style="border-top:1px solid #e8e4dc;font-size:0;line-height:0">&nbsp;</td></tr>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 24px 0">
+          <tr><td style="border-top:1px solid #DDD0C1;font-size:0;line-height:0">&nbsp;</td></tr>
         </table>
-        <p style="font-size:12px;color:#a8a094;margin:0">El código expira en ${expiresInMinutes} minutos y solo se puede usar una vez.</p>
+        <p style="font-size:13px;color:#605C57;margin:0 0 8px 0">Este código expira en <strong>${expiresInMinutes} minutos</strong> y solo se puede usar una vez.</p>
+        <p style="font-size:13px;color:#605C57;margin:0 0 24px 0">Si no pediste este código, podés ignorar este mensaje de forma segura.</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:#F5F0E9;border-radius:8px;padding:16px">
+          <tr>
+            <td style="padding:16px">
+              <p style="font-size:12px;color:#9E9A94;margin:0 0 4px 0;letter-spacing:0.04em;text-transform:uppercase;font-weight:600">Consejo de seguridad</p>
+              <p style="font-size:13px;color:#605C57;margin:0">Nunca compartas este código con nadie. El equipo de Nexa CRM nunca te lo va a pedir por teléfono o chat.</p>
+            </td>
+          </tr>
+        </table>
       `,
     });
     return this.sendEmail({ to, subject, html });
@@ -324,19 +408,34 @@ export class NotificationsService {
     const { to, firstName, at, ip } = opts;
     const when = at.toLocaleString('es-AR', { dateStyle: 'medium', timeStyle: 'short' });
     const ipLine = ip
-      ? `<p style="font-size:12px;color:#a8a094;margin:8px 0 0 0">Dirección IP: <code style="background:#f4f1ec;padding:3px 8px;border-radius:4px;font-size:12px;color:#3d3832">${escapeHtml(ip)}</code></p>`
+      ? `<p style="font-size:13px;color:#605C57;margin:8px 0 0 0">Dirección IP: <code style="background:#F5F0E9;padding:3px 8px;border-radius:4px;font-size:12px;color:#1A1A1A">${escapeHtml(ip)}</code></p>`
       : '';
     const subject = `Nuevo inicio de sesión en Nexa CRM`;
     const html = emailShell({
       eyebrow: 'NEXA · Seguridad',
       title: `Hola, ${escapeHtml(firstName)}`,
       bodyHtml: `
-        <p style="font-size:14px;line-height:1.65;color:#3d3832;margin:0 0 4px 0">Registramos un inicio de sesión en tu cuenta el <strong>${escapeHtml(when)}</strong>.</p>
-        ${ipLine}
-        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:24px 0 0 0">
-          <tr><td style="border-top:1px solid #e8e4dc;font-size:0;line-height:0">&nbsp;</td></tr>
+        <p style="font-size:14px;line-height:1.65;color:#605C57;margin:0 0 8px 0">Se detectó un nuevo inicio de sesión en tu cuenta de Nexa CRM.</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:#F5F0E9;border-radius:8px;margin:0 0 24px 0">
+          <tr>
+            <td style="padding:16px">
+              <p style="font-size:13px;color:#605C57;margin:0 0 4px 0"><strong>Fecha:</strong> ${escapeHtml(when)}</p>
+              ${ipLine}
+            </td>
+          </tr>
         </table>
-        <p style="font-size:12px;color:#a8a094;margin:20px 0 0 0">Si no fuiste vos, cambiá tu contraseña de inmediato desde Settings.</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FEF2F2;border-radius:8px;margin:0 0 24px 0">
+          <tr>
+            <td style="padding:16px">
+              <p style="font-size:12px;color:#9E9A94;margin:0 0 6px 0;letter-spacing:0.04em;text-transform:uppercase;font-weight:600">¿No fuiste vos?</p>
+              <p style="font-size:13px;color:#605C57;margin:0">Si no reconocés este inicio de sesión, cambiá tu contraseña inmediatamente desde <strong>Settings → Seguridad</strong>. También podés cerrar todas las sesiones activas desde ahí.</p>
+            </td>
+          </tr>
+        </table>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px 0">
+          <tr><td style="border-top:1px solid #DDD0C1;font-size:0;line-height:0">&nbsp;</td></tr>
+        </table>
+        <p style="font-size:12px;color:#9E9A94;margin:0">Este es un email automático de seguridad. No respondas a este mensaje.</p>
       `,
     });
     return this.sendEmail({ to, subject, html });
@@ -391,14 +490,35 @@ export class NotificationsService {
           ? `${greeting}. Te confirmamos el pago de la factura <strong>${invoiceNumber}</strong>${totalText ? ` por <strong>${totalText}</strong>` : ''}. Gracias por tu pago.`
           : `${greeting}. Te avisamos que la factura <strong>${invoiceNumber}</strong> fue anulada. Si tenés dudas, contactanos.`;
 
-    const html = `
-      <div style="font-family:Inter,Arial,sans-serif;color:#1a1a1a;max-width:560px;margin:0 auto;padding:24px;border:1px solid #e6e1d2;background:#fffefb">
-        <p style="margin:0 0 8px 0;letter-spacing:.18em;text-transform:uppercase;font-size:11px;color:#a8a094">NEXA · Facturación</p>
-        <h1 style="font-family:Georgia,serif;font-weight:500;font-size:24px;margin:0 0 16px 0">${escapeHtml(strip(kind === 'paid' ? 'Pago confirmado' : kind === 'cancelled' ? 'Factura anulada' : 'Nueva factura'))}</h1>
-        <p style="font-size:14px;line-height:1.55">${body}</p>
-        ${kind !== 'cancelled' ? `<p style="font-size:12px;color:#7c7565;margin-top:24px">Factura <strong>${escapeHtml(invoiceNumber)}</strong>${totalText ? ` · Total <strong>${escapeHtml(totalText)}</strong>` : ''}</p>` : ''}
-      </div>
-    `;
+    const html = emailShell({
+      eyebrow: 'NEXA · Facturación',
+      title: escapeHtml(
+        strip(
+          kind === 'paid'
+            ? 'Pago confirmado'
+            : kind === 'cancelled'
+              ? 'Factura anulada'
+              : 'Nueva factura',
+        ),
+      ),
+      bodyHtml: `
+        <p style="font-size:14px;line-height:1.65;color:#605C57;margin:0 0 20px 0">${body}</p>
+        ${
+          kind !== 'cancelled'
+            ? `
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:#F5F0E9;border-radius:8px;margin:0 0 24px 0">
+          <tr>
+            <td style="padding:16px">
+              <p style="font-size:13px;color:#605C57;margin:0 0 4px 0"><strong>Factura:</strong> ${escapeHtml(invoiceNumber)}</p>
+              ${totalText ? `<p style="font-size:13px;color:#605C57;margin:0"><strong>Total:</strong> ${escapeHtml(totalText)}</p>` : ''}
+            </td>
+          </tr>
+        </table>`
+            : ''
+        }
+        ${pdfBuffer ? `<p style="font-size:12px;color:#9E9A94;margin:0">El comprobante adjunto contiene los detalles completos de la transacción.</p>` : ''}
+      `,
+    });
 
     return this.sendEmail({
       to,
@@ -411,10 +531,15 @@ export class NotificationsService {
   }
 }
 
-function emailShell(opts: { eyebrow: string; title: string; bodyHtml: string }) {
+function emailShell(opts: {
+  eyebrow: string;
+  title: string;
+  bodyHtml: string;
+  footerHtml?: string;
+}) {
   return `
-    <div style="margin:0;padding:0;background-color:#f4f1ec;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
-      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:#f4f1ec">
+    <div style="margin:0;padding:0;background-color:#EDE5D8;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:#EDE5D8">
         <tr>
           <td align="center" style="padding:40px 20px">
             <table role="presentation" cellpadding="0" cellspacing="0" width="560" style="max-width:560px;width:100%">
@@ -423,26 +548,26 @@ function emailShell(opts: { eyebrow: string; title: string; bodyHtml: string }) 
                 <td align="center" style="padding-bottom:32px">
                   <table role="presentation" cellpadding="0" cellspacing="0">
                     <tr>
-                      <td style="background-color:#1a1a1a;color:#fffefb;font-family:Georgia,serif;font-size:16px;font-weight:600;letter-spacing:-0.02em;padding:8px 14px;border-radius:6px">Nexa</td>
+                      <td style="background-color:#1A1A1A;color:#fffefb;font-family:Georgia,serif;font-size:16px;font-weight:600;letter-spacing:-0.02em;padding:8px 16px;border-radius:6px">Nexa</td>
                     </tr>
                   </table>
                 </td>
               </tr>
               <!-- Card -->
               <tr>
-                <td style="background-color:#fffefb;border-radius:12px;border:1px solid #e8e4dc;overflow:hidden">
-                  <!-- Header accent bar -->
+                <td style="background-color:#FFFFFF;border-radius:12px;border:1px solid #DDD0C1;overflow:hidden">
+                  <!-- Naranja accent bar -->
                   <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                     <tr>
-                      <td style="height:4px;background:linear-gradient(90deg,#1a1a1a 0%,#a8a094 100%);font-size:0;line-height:0">&nbsp;</td>
+                      <td style="height:4px;background-color:#FF5E1F;font-size:0;line-height:0">&nbsp;</td>
                     </tr>
                   </table>
                   <!-- Content -->
                   <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                     <tr>
                       <td style="padding:40px 40px 32px 40px">
-                        <p style="margin:0 0 6px 0;letter-spacing:0.14em;text-transform:uppercase;font-size:10px;font-weight:600;color:#a8a094">${escapeHtml(opts.eyebrow)}</p>
-                        <h1 style="font-family:Georgia,serif;font-weight:500;font-size:26px;line-height:1.3;color:#1a1a1a;margin:0 0 24px 0;letter-spacing:-0.01em">${opts.title}</h1>
+                        <p style="margin:0 0 6px 0;letter-spacing:0.14em;text-transform:uppercase;font-size:10px;font-weight:600;color:#9E9A94">${escapeHtml(opts.eyebrow)}</p>
+                        <h1 style="font-family:Georgia,serif;font-weight:500;font-size:26px;line-height:1.3;color:#1A1A1A;margin:0 0 24px 0;letter-spacing:-0.01em">${opts.title}</h1>
                         ${opts.bodyHtml}
                       </td>
                     </tr>
@@ -452,8 +577,13 @@ function emailShell(opts: { eyebrow: string; title: string; bodyHtml: string }) 
               <!-- Footer -->
               <tr>
                 <td align="center" style="padding:28px 20px 0 20px">
-                  <p style="margin:0 0 6px 0;font-size:11px;color:#a8a094;letter-spacing:0.04em">Nexa CRM</p>
-                  <p style="margin:0;font-size:11px;color:#b8b0a4">Recibiste este email porque tenés una cuenta asociada a esta dirección.</p>
+                  ${
+                    opts.footerHtml ||
+                    `
+                  <p style="margin:0 0 6px 0;font-size:11px;color:#9E9A94;letter-spacing:0.04em">Nexa CRM</p>
+                  <p style="margin:0;font-size:11px;color:#BFB4A1">Recibiste este email porque tenés una cuenta asociada a esta dirección.</p>
+                  `
+                  }
                 </td>
               </tr>
             </table>
