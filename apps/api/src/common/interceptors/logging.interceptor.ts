@@ -1,6 +1,7 @@
 import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { redactPII } from '../utils/pii-redaction';
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
@@ -20,7 +21,7 @@ export class LoggingInterceptor implements NestInterceptor {
           this.logger.log(
             JSON.stringify({
               method,
-              url,
+              url: redactPII(url),
               statusCode: response.statusCode,
               durationMs: Date.now() - now,
               userId,
@@ -30,14 +31,19 @@ export class LoggingInterceptor implements NestInterceptor {
           );
         },
         error: (error) => {
+          // SECURITY: scrub PII from URL (?token=...) and from the error
+          // message before logging. error.message can echo back parts of
+          // the request (e.g. "Invalid token: eyJ..."). Combined with
+          // HttpExceptionFilter, this is the last line of defense against
+          // credentials leaking into log files / Sentry.
           this.logger.error(
             JSON.stringify({
               method,
-              url,
+              url: redactPII(url),
               durationMs: Date.now() - now,
               userId,
               organizationId,
-              error: error.message,
+              error: redactPII(error.message),
               timestamp: new Date().toISOString(),
             }),
           );

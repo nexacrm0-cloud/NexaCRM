@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Response, Request } from 'express';
+import { redactPII, redactPIIDeep } from '../utils/pii-redaction';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -39,29 +40,41 @@ export class HttpExceptionFilter implements ExceptionFilter {
         }
       }
     } else if (exception instanceof Error) {
-      this.logger.error(`Unhandled exception: ${exception.message}`, exception.stack, {
-        path: request.url,
-        method: request.method,
-      });
+      this.logger.error(
+        `Unhandled exception: ${redactPII(exception.message)}`,
+        exception.stack ? redactPII(exception.stack) : undefined,
+        {
+          path: request.url,
+          method: request.method,
+        },
+      );
     }
 
+    // SECURITY: scrub PII from details (typically Zod validation errors that
+    // echo back parts of the request body) before they reach the response
+    // body or the logger. The body still gets the *shape* so the SPA can
+    // render form-level errors; only the values are redacted.
+    const safeDetails = details ? redactPIIDeep(details) : undefined;
     const errorBody = {
       success: false,
       error: {
         code: errorCode,
         message: Array.isArray(messages) ? messages.join('; ') : messages,
-        ...(details ? { details } : {}),
+        ...(safeDetails ? { details: safeDetails } : {}),
       },
     };
 
+    const redactedMessage = redactPII(Array.isArray(messages) ? messages.join('; ') : messages);
+    const redactedDetails = safeDetails ? JSON.stringify(redactPIIDeep(safeDetails)) : undefined;
+
     if (status >= 500) {
       this.logger.error(
-        `${request.method} ${request.url} - ${status} - ${Array.isArray(messages) ? messages.join('; ') : messages}`,
-        exception instanceof Error ? exception.stack : undefined,
+        `${request.method} ${request.url} - ${status} - ${redactedMessage}${redactedDetails ? ` | details: ${redactedDetails}` : ''}`,
+        exception instanceof Error ? redactPII(exception.stack ?? '') : undefined,
       );
     } else {
       this.logger.warn(
-        `${request.method} ${request.url} - ${status} - ${Array.isArray(messages) ? messages.join('; ') : messages}`,
+        `${request.method} ${request.url} - ${status} - ${redactedMessage}${redactedDetails ? ` | details: ${redactedDetails}` : ''}`,
       );
     }
 
