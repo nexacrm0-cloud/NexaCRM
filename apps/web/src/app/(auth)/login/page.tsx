@@ -1,14 +1,14 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { Loader2, KeyRound, Mail } from 'lucide-react';
-import { Turnstile } from '@marsidev/react-turnstile';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AuthShell } from '@/components/auth/auth-shell';
+import { TurnstileWidget } from '@/components/auth/turnstile-widget';
 
 type Mode = 'password' | 'otp';
 
@@ -157,28 +157,16 @@ export default function LoginPage() {
               "CAPTCHA token requerido" and can't tell that the server is
               configured but the build env var is missing. */}
           {showCaptcha && (
-            <div className="flex flex-col items-center gap-2">
-              {turnstileSiteKey ? (
-                <Turnstile
-                  siteKey={turnstileSiteKey}
-                  onSuccess={(token) => {
-                    captchaTokenRef.current = token;
-                  }}
-                  onError={() => {
-                    captchaTokenRef.current = undefined;
-                  }}
-                  onExpire={() => {
-                    captchaTokenRef.current = undefined;
-                  }}
-                  options={{ theme: 'light', size: 'flexible' }}
-                />
-              ) : (
-                <div className="border-alizarin/40 bg-alizarin/10 eyebrow text-alizarin w-full border px-3 py-2 text-center">
-                  CAPTCHA no configurado en el servidor (NEXT_PUBLIC_TURNSTILE_SITE_KEY).
-                  Contactá a soporte si ves este mensaje.
-                </div>
-              )}
-            </div>
+            <TurnstileWidget
+              siteKey={turnstileSiteKey}
+              onToken={(token) => {
+                captchaTokenRef.current = token;
+              }}
+              onError={(err) => {
+                captchaTokenRef.current = undefined;
+                console.warn('[Turnstile] error:', err);
+              }}
+            />
           )}
           <Button type="submit" variant="ink" className="w-full" disabled={loading}>
             {loading ? (
