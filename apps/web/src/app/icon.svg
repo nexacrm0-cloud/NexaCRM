@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Nexa">
+  <title>Nexa</title>
+  <defs>
+    <clipPath id="receipt">
+      <path d="M0 0
+               H64
+               V58
+               L61 56 L58 60 L55 56 L52 60 L49 56 L46 60 L43 56 L40 60
+               L37 56 L34 60 L31 56 L28 60 L25 56 L22 60 L19 56 L16 60
+               L13 56 L10 60 L7 56 L4 60 L1 56 L0 58 Z" />
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#receipt)">
+    <rect width="64" height="64" fill="#E9DFC4" />
+
+    <g stroke="rgba(26,26,26,0.10)" stroke-width="0.6">
+      <line x1="6" y1="46" x2="58" y2="46" />
+      <line x1="6" y1="50" x2="58" y2="50" />
+    </g>
+
+    <rect x="8" y="8" width="48" height="40" fill="#1A1A1A" />
+
+    <g transform="translate(32 32) rotate(-1.2)">
+      <text x="0" y="11"
+            font-family="Georgia, 'Times New Roman', serif"
+            font-size="34"
+            font-weight="700"
+            text-anchor="middle"
+            fill="#E9DFC4"
+            letter-spacing="-1.5">N</text>
+    </g>
+
+    <circle cx="50" cy="12" r="2.6" fill="#FF6A1F" />
+  </g>
+
+  <rect x="0.5" y="0.5" width="63" height="63"
+        fill="none" stroke="rgba(26,26,26,0.35)" stroke-width="1"
+        clip-path="url(#receipt)" />
+</svg>
