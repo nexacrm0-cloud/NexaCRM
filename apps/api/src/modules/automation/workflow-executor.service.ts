@@ -45,6 +45,11 @@ export class WorkflowExecutor {
         metadata: event.metadata,
         workflowId: workflow.id,
         organizationId: organizationId,
+      }, {
+        // SECURITY: never follow 30x redirects to SSRF targets. The URL was
+        // validated against the private-IP blocklist above; a redirect could
+        // pivot to an internal endpoint that the original URL didn't expose.
+        maxRedirects: 0,
       });
 
       return {

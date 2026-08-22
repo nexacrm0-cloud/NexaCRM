@@ -1,5 +1,5 @@
 import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common';
-import { readFileSync } from 'fs';
+import { readFileSync, statSync, accessSync, constants as fsConstants } from 'fs';
 import type { AfipProvider, AfipIssueInput, AfipIssueResult } from './afip-provider.interface';
 import { CBTE_TIPO_BY_INVOICE_TYPE, AFIP_MONEDA_PESOS } from './afip.constants';
 
@@ -61,6 +61,28 @@ export class AfipsdkProvider implements AfipProvider {
     }
 
     try {
+      // SECURITY: validate that cert + key files exist and have restrictive
+      // permissions (0600 = owner read/write only). AFIP private keys are
+      // long-lived bearer credentials — if the file is world-readable on a
+      // shared host, any process can impersonate the org before AFIP. We log
+      // a warning rather than throwing so dev environments with looser
+      // permissions (e.g. bind-mounted volumes) keep working.
+      const certStat = statSync(certPath);
+      const keyStat = statSync(keyPath);
+      accessSync(certPath, fsConstants.R_OK);
+      accessSync(keyPath, fsConstants.R_OK);
+      const warnIfPermissive = (path: string, mode: number) => {
+        // Bits: world-read = 0o004, group-read = 0o040. If either set, warn.
+        if ((mode & 0o044) !== 0) {
+          this.logger.warn(
+            `AFIP key file ${path} has permissive mode 0${mode.toString(8).padStart(3, '0')}. ` +
+              `Recommend chmod 0600 — AFIP private key is a long-lived bearer credential.`,
+          );
+        }
+      };
+      warnIfPermissive(certPath, certStat.mode);
+      warnIfPermissive(keyPath, keyStat.mode);
+
       const cert = readFileSync(certPath, 'utf8');
       const key = readFileSync(keyPath, 'utf8');
 

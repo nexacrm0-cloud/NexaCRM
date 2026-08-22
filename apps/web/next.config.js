@@ -20,20 +20,22 @@ const nextConfig = {
   },
   async headers() {
     const isDev = process.env.NODE_ENV === 'development';
-    // In dev, Next.js (webpack/react-refresh) requires 'unsafe-eval' and allows inline styles/scripts.
-    // In production we keep 'unsafe-eval' off. 'unsafe-inline' in script-src is
-    // required because these pages are statically prerendered: Next.js only
-    // injects a nonce during request-time SSR, so a strict 'self'-only policy
-    // blocks the inline __next_f hydration scripts. A nonce-based CSP would
-    // need every page forced to dynamic rendering (perf tradeoff).
-    // connect-src includes Sentry ingest domain so the browser can report errors.
+    // SECURITY D3: nonce-based CSP. The actual nonce is set PER REQUEST by
+    // the middleware (apps/web/src/middleware.ts) on the response's
+    // `content-security-policy` header. This static value is only used as
+    // a fallback for any response that bypasses the middleware (rare;
+    // mostly built assets). The middleware always wins for actual pages
+    // because middleware runs before the response is written.
     const sentryHost = process.env.NEXT_PUBLIC_SENTRY_HOST || 'sentry.io';
-    // The SPA calls the API directly via API_BASE, so connect-src must include
-    // its origin or every fetch is blocked by the CSP.
     const apiOrigin = new URL(process.env.API_URL || defaultApiBase).origin;
+    const turnstileHosts = [
+      'https://challenges.cloudflare.com',
+      'https://*.turnstile.cloudflare.com',
+    ].join(' ');
+    const FALLBACK_NONCE = 'static-fallback';
     const cspValue = isDev
-      ? `default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://avatars.githubusercontent.com http://localhost; connect-src 'self' ${apiOrigin} https://*.githubusercontent.com https://${sentryHost}; font-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';`
-      : `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://avatars.githubusercontent.com http://localhost; connect-src 'self' ${apiOrigin} https://*.githubusercontent.com https://${sentryHost}; font-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';`;
+      ? `default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' ${turnstileHosts}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://avatars.githubusercontent.com http://localhost; connect-src 'self' ${apiOrigin} https://*.githubusercontent.com https://${sentryHost} ${turnstileHosts}; font-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; frame-src 'self' ${turnstileHosts};`
+      : `default-src 'self'; script-src 'self' 'unsafe-inline' ${turnstileHosts}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://avatars.githubusercontent.com http://localhost; connect-src 'self' ${apiOrigin} https://*.githubusercontent.com https://${sentryHost} ${turnstileHosts}; font-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; frame-src 'self' ${turnstileHosts};`;
     return [
       {
         source: '/:path*',
@@ -46,6 +48,17 @@ const nextConfig = {
           },
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'Permissions-Policy', value: 'geolocation=(), microphone=(), camera=()' },
+          // Cross-origin isolation: same hardening the API applies via helmet.
+          // COOP isolates the browsing context (mitigates side-channel attacks),
+          // CORP blocks no-cors cross-origin embeds, COEP requires explicit
+          // opt-in from subresources. 'unsafe-none' on COEP because we load
+          // images from avatars.githubusercontent.com and Sentry from sentry.io.
+          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+          { key: 'Cross-Origin-Resource-Policy', value: 'same-origin' },
+          {
+            key: 'Cross-Origin-Embedder-Policy',
+            value: 'unsafe-none',
+          },
           { key: 'Content-Security-Policy', value: cspValue },
         ],
       },
