@@ -55,24 +55,23 @@ function buildCsp(nonce: string): string {
       `frame-src 'self' ${turnstileHosts}`,
     ].join('; ');
   }
-  // Production: nonce-locked script-src, no 'unsafe-inline' for scripts.
-  // style-src keeps 'unsafe-inline' because Next.js still emits some
-  // critical CSS without nonces for SSR'd pages; locking it would
-  // require touching every styled element in the app.
+  // Production: script-src allows 'unsafe-inline' because Next.js 14 emits
+  // hydration scripts (__next_f.push) that don't carry our nonce. Per the
+  // CSP spec, having BOTH 'nonce-...' AND 'unsafe-inline' disables the
+  // 'unsafe-inline' (browsers ignore it when a nonce is present), so we
+  // omit the nonce entirely and rely on the inline allowance for hydration.
   //
-  // NOTE: we also add 'unsafe-inline' as a fallback for the small set of
-  // inline scripts Next.js emits during hydration (__next_f.push, etc.).
-  // Next.js 14 does not propagate the nonce to its own emitted inline
-  // scripts in all code paths, so without 'unsafe-inline' the page
-  // would fail to hydrate and the user would see a blank screen. The
-  // proper fix is upgrading to Next.js 15+ which supports nonce
-  // propagation natively (tracked as decision D1). For now this is the
-  // pragmatic balance: nonce is still issued per request (visible to
-  // scripts we explicitly tag), and the inline allowance is bounded to
-  // the scope of this origin by default-src 'self'.
+  // The proper fix is upgrading to Next.js 15+ where nonce propagation
+  // works natively (tracked as decision D1). Until then, this is the
+  // only working configuration for Next.js 14.
+  //
+  // D3 (nonce-based CSP) is therefore partially reverted for script-src
+  // only. The nonce is still issued per request and exposed via the
+  // x-nonce response header for any future script that wants to opt in.
+  // style-src keeps 'unsafe-inline' for the same Next.js reason.
   return [
     `default-src 'self'`,
-    `script-src 'self' 'nonce-${nonce}' 'unsafe-inline' ${turnstileHosts}`,
+    `script-src 'self' 'unsafe-inline' ${turnstileHosts}`,
     `style-src 'self' 'unsafe-inline'`,
     `img-src 'self' data: blob: https://avatars.githubusercontent.com http://localhost`,
     `connect-src 'self' ${apiOrigin} https://*.githubusercontent.com https://${sentryHost} ${turnstileHosts}`,
