@@ -95,6 +95,21 @@ describe('ClientsService', () => {
       const result = await service.findOne('client-1', 'org-1');
       expect(result.id).toBe('client-1');
     });
+
+    // SECURITY: IDOR defense contract. findOne must pass organizationId as
+    // part of the Prisma where clause so a tenant cannot read another
+    // tenant's client by guessing the UUID. Postgres RLS provides a second
+    // layer at the DB level, but the application-level filter is the
+    // contract the rest of the code depends on. Pin it here so a future
+    // refactor doesn't accidentally drop the filter.
+    it('should scope findOne by organizationId (IDOR defense)', async () => {
+      mockPrisma.client.findFirst.mockResolvedValue(null);
+      await service.findOne('client-of-org-2', 'org-1').catch(() => undefined);
+      const whereArg = mockPrisma.client.findFirst.mock.calls[0][0];
+      expect(whereArg.where).toEqual(
+        expect.objectContaining({ id: 'client-of-org-2', organizationId: 'org-1' }),
+      );
+    });
   });
 
   describe('create', () => {
