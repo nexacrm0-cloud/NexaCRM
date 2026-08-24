@@ -27,7 +27,7 @@
     "@nexa/database": "workspace:*",
     "@nexa/domain": "workspace:*",
     "@nexa/shared": "workspace:*",
-    "@sentry/node": "^8.51.0",
+    "@sentry/node": "^9.47.1",
     "@types/rrule": "^2.2.9",
     "axios": "^1.18.1",
     "bcryptjs": "^2.4.3",
