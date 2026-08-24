@@ -79,6 +79,13 @@ async function getCatalog(): Promise<CatalogResponse> {
   try {
     const res = await fetch(`${API_BASE}/automation/public/catalog`, {
       next: { revalidate: 60 },
+      // During `next build`, this page is statically generated. If the API
+      // is unreachable (localhost dev without the API running, CI without
+      // network access, etc.) the fetch hangs on DNS/TCP for ~60s and Next
+      // kills the worker with "Failed to build /... (attempt N of 3)".
+      // A 10s abort keeps the build fast and correctly returns the empty
+      // fallback catalog when offline.
+      signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) throw new Error('catalog unavailable');
     return (await res.json()) as CatalogResponse;
