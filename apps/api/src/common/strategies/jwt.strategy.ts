@@ -24,7 +24,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         },
       ]),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET,
+      // JWT_SECRET is validated at boot by validateEnv() in main.ts (>=32
+      // chars, not a placeholder). The `!` assertion is safe because the
+      // process will refuse to start if it's missing or weak.
+      secretOrKey: process.env.JWT_SECRET!,
     });
   }
 
