@@ -20,7 +20,7 @@ Sentry.init({
   beforeSend(event) {
     if (process.env.NODE_ENV !== 'production') return null;
     if (event.request) {
-      if (event.request.cookies) event.request.cookies = '[REDACTED]';
+      if (event.request.cookies) event.request.cookies = { '[REDACTED]': '[REDACTED]' };
       if (event.request.headers) {
         const safeHeaders: Record<string, string> = {};
         for (const [k, v] of Object.entries(event.request.headers)) {
