@@ -225,7 +225,13 @@ async function bootstrap() {
   // not CSRF-relevant: webhooks validate HMAC, /auth/* validates Zod input
   // and returns 401 without a valid JWT cookie regardless of Origin.
   app.enableCors({
-    origin: (origin, callback) => {
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
+      // SECURITY: no-Origin = server-to-server (Render health probe, n8n,
+      // internal cron, uptime monitors). Allow. Origin present = browser
+      // cross-origin; verify against allowlist.
       if (!origin) {
         return callback(null, true);
       }

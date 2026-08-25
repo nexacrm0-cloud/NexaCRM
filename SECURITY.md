@@ -211,3 +211,77 @@ For now: contact `Mateo Dumas` (`167363457+MateoDumas@users.noreply.github.com`)
 via GitHub or your internal channel.
 
 Future: implement a `SECURITY.md` GitHub banner with a PGP key.
+
+---
+
+## Secret rotation procedures (operational)
+
+### Cadence: every 90 days (or immediately upon suspected compromise)
+
+| Secret | Location | Rotation steps | Validation |
+|--------|----------|----------------|------------|
+| `JWT_SECRET` | Render API env vars | 1. Generate new 64-char random string (`openssl rand -base64 48`)<br>2. Add as `JWT_SECRET_NEW` in Render<br>3. Deploy with dual-verify: accept both old + new for 1 release<br>4. Remove old, rename new to `JWT_SECRET` | `pnpm test` + manual login/logout flow |
+| `JWT_REFRESH_SECRET` | Render API env vars | Same as `JWT_SECRET` | Same |
+| `JWT_2FA_PENDING_SECRET` | Render API env vars | Same as `JWT_SECRET` | Same + 2FA complete-login test |
+| `MP_ACCESS_TOKEN` | Render API env vars | 1. In Mercado Pago dashboard → Credentials → Rotate access token<br>2. Update Render env var<br>3. Redeploy API | Test a checkout flow end-to-end |
+| `MP_WEBHOOK_SECRET` | Render API env vars | 1. In MP dashboard → Webhooks → Regenerate secret<br>2. Update Render env var<br>3. Redeploy API | Trigger test webhook (MP dashboard "Send test") |
+| `WHATSAPP_APP_SECRET` | Render API env vars | 1. In Meta Business Manager → WhatsApp → Settings → App Secret → Reset<br>2. Update Render env var<br>3. Redeploy API | Send test message from WhatsApp sandbox |
+| `WHATSAPP_VERIFY_TOKEN` | Render API + Web env vars | 1. Generate new 32-char random string<br>2. Update both API + Web env vars<br>3. Redeploy both | Webhook verification test in Meta dashboard |
+| `SENTRY_DSN` | Render API + Web env vars | 1. In Sentry → Project Settings → Client Keys (DSN) → Regenerate<br>2. Update both env vars<br>3. Redeploy both | Trigger test error, verify in Sentry |
+| `TURNSTILE_SECRET_KEY` | Render API env vars | 1. In Cloudflare Turnstile → Site → Secret Key → Regenerate<br>2. Update API env var<br>3. Redeploy API | Login with CAPTCHA, verify challenge passes |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Render Web env vars | 1. Same Cloudflare site → Site Key (public, no rotation needed unless domain changes) | Widget loads on `/login` |
+| Database credentials | Render Postgres | 1. Render Dashboard → Database → Credentials → Rotate<br>2. Update `DATABASE_URL` in API env vars<br>3. Redeploy API | `pnpm test` passes, app boots |
+| `AFIP_CERT_PATH` / `AFIP_KEY_PATH` | Render API (mounted secret files) | 1. Generate new AFIP cert/key pair in AFIP homologation<br>2. Upload new files to Render secret files<br>3. Update paths if changed<br>4. Redeploy API | Emit test invoice in homologation, verify CAE |
+
+### Backup encryption (Render-managed)
+
+- Render Postgres: automated daily backups, encrypted at rest (AES-256), retained 7 days (configurable up to 30 on paid plans).
+- Point-in-time recovery: available via Render dashboard.
+- No additional app-level backup encryption needed — Render handles it.
+
+### Incident response rotation (emergency)
+
+If any secret is suspected compromised:
+1. **Immediately** rotate that secret using the procedure above.
+2. Invalidate all active sessions: truncate `refresh_tokens` table or add a `revoked_at` column and filter in `AuthService.refresh()`.
+3. Force re-login: deploy with a new `JWT_SECRET` (users auto-logged out).
+4. Audit logs: check Sentry + DB audit log for anomalous access patterns in the last 24h.
+5. Notify stakeholders per internal runbook.
+
+---
+
+## D3 — CSP nonce migration roadmap (post-beta sprint)
+
+### Current state (D3 spike applied)
+- `apps/web/src/middleware.ts` generates a per-request nonce (128-bit base64) and emits it in the `Content-Security-Policy` header as `script-src 'nonce-XXX'`.
+- Fallback in `apps/web/next.config.js` still has `'unsafe-inline'` for assets that bypass middleware (rare).
+- **Known gap**: Next.js 14 emits inline hydration scripts (`__next_f.push(...)`) that don't carry the nonce, so we MUST keep `'unsafe-inline'` in production for now.
+
+### Blocker: Next.js 14 limitation
+Next.js 14 does NOT support automatic nonce propagation to hydration scripts. The CSP spec forbids combining nonce + `unsafe-inline` (the latter is ignored when a nonce is present). We tried a nonce-only CSP in D3 spike and it broke hydration.
+
+### Proper fix: D1 (Next.js 15 upgrade)
+Next.js 15 supports **native nonce propagation** via the `Script` component's `nonce` prop and the new `cspNonce` config. Once D1 is merged (Next 14→15 + Sentry 9), we can:
+
+1. Remove `'unsafe-inline'` from `script-src` in `next.config.js`.
+2. Update `middleware.ts` to emit only `script-src 'nonce-XXX'`.
+3. Replace any remaining manual `<script>` tags with `<Script nonce={nonce}>` in page components.
+4. Verify hydration works on all pages.
+
+### Migration checklist (for the sprint after D1 merge)
+
+- [ ] D1 (Next.js 15 + Sentry 9) merged and validated in production.
+- [ ] Remove `'unsafe-inline'` from `script-src` in `apps/web/next.config.js` (keep only `'nonce-XXX'`).
+- [ ] Remove `'unsafe-inline'` from `style-src` if Next 15 supports CSS nonce (or document remaining gap).
+- [ ] Update `apps/web/src/middleware.ts` to emit strict CSP without fallback `unsafe-inline`.
+- [ ] Audit all components for inline `<script>` / `<style>` — replace with `Script`/`Style` components from `next/script` with `nonce` prop.
+- [ ] Test hydration on: `/login`, `/register`, `/dashboard`, `/automatizaciones/pro`, `/clients`, `/invoices`.
+- [ ] Verify Turnstile CAPTCHA widget still loads (needs `script-src 'nonce-XXX' 'unsafe-inline'` for Cloudflare's inline script OR migrate to external script).
+- [ ] Run `pnpm test` + manual QA pass.
+- [ ] Update `SECURITY.md` threat model: CSP nonce = ✅.
+
+### Estimated effort
+2-3 days of focused work after D1 is stable in production.
+
+### Why this is the highest-impact remaining security improvement
+Removing `'unsafe-inline'` closes the last major XSS vector: if an attacker finds any injection point (even in a component we thought safe), they can't execute script without the per-request nonce. This is defense-in-depth at the browser level.
