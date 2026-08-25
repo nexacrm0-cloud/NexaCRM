@@ -159,7 +159,9 @@ export class AuthController {
         // will accept. The SPA still needs to know userId to call complete-login,
         // but now it can only complete by also presenting this cookie.
         const maxAge = 5 * 60 * 1000;
-        res.cookie('twofa_pending', result.pendingToken, { ...COOKIE_OPTS, maxAge });
+        const twofaName =
+          process.env.NODE_ENV === 'production' ? '__Host-twofa_pending' : 'twofa_pending';
+        res.cookie(twofaName, result.pendingToken, { ...COOKIE_OPTS, maxAge });
         return { success: true, data: { requiresTwoFactor: true, userId: result.userId } };
       }
       this.setRefreshTokenCookie(res, result.refreshToken);
@@ -216,9 +218,13 @@ export class AuthController {
     const refreshName =
       process.env.NODE_ENV === 'production' ? '__Host-refresh_token' : 'refresh_token';
     res.clearCookie(refreshName, { ...cookieOpts, maxAge: 0 });
-    res.clearCookie('twofa_pending', { ...COOKIE_OPTS, maxAge: 0 });
+    const twofaName =
+      process.env.NODE_ENV === 'production' ? '__Host-twofa_pending' : 'twofa_pending';
+    res.clearCookie(twofaName, { ...COOKIE_OPTS, maxAge: 0 });
     res.clearCookie('access_token', { path: '/', maxAge: 0 });
-    res.clearCookie('csrf-token', { path: '/', maxAge: 0 });
+    const csrfName =
+      process.env.NODE_ENV === 'production' ? '__Host-csrf-token' : 'csrf-token';
+    res.clearCookie(csrfName, { path: '/', maxAge: 0 });
     return { success: true, data: { message: 'Sesión cerrada exitosamente' } };
   }
 
@@ -331,9 +337,11 @@ export class AuthController {
     @Body('token') token: string,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const pendingToken = (req as any).cookies?.['twofa_pending'] as string | undefined;
+    const twofaName =
+      process.env.NODE_ENV === 'production' ? '__Host-twofa_pending' : 'twofa_pending';
+    const pendingToken = (req as any).cookies?.[twofaName] as string | undefined;
     const result = await this.authService.completeTwoFactorLogin(userId, token, pendingToken);
-    res.clearCookie('twofa_pending', { ...COOKIE_OPTS, maxAge: 0 });
+    res.clearCookie(twofaName, { ...COOKIE_OPTS, maxAge: 0 });
     this.setRefreshTokenCookie(res, result.refreshToken);
     return { success: true, data: { user: result.user, accessToken: result.accessToken } };
   }

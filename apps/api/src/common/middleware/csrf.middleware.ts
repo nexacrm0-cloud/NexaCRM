@@ -2,8 +2,11 @@ import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 
-const CSRF_COOKIE = 'csrf-token';
+const CSRF_COOKIE_BASE = 'csrf-token';
 const CSRF_HEADER = 'x-csrf-token';
+
+const isProd = () => process.env.NODE_ENV === 'production';
+const csrfCookieName = () => (isProd() ? `__Host-${CSRF_COOKIE_BASE}` : CSRF_COOKIE_BASE);
 
 const EXCLUDED_PATHS = [
   '/api/v1/auth/login',
@@ -30,7 +33,7 @@ export class CsrfMiddleware implements NestMiddleware {
       return next();
     }
 
-    const cookieToken = req.cookies?.[CSRF_COOKIE];
+    const cookieToken = req.cookies?.[csrfCookieName()];
 
     if (!cookieToken) {
       res.status(403).json({
@@ -56,15 +59,16 @@ export class CsrfMiddleware implements NestMiddleware {
   }
 
   private ensureCookie(req: Request, res: Response) {
-    if (!req.cookies?.[CSRF_COOKIE]) {
+    if (!req.cookies?.[CSRF_COOKIE_BASE]) {
       const token = crypto.randomBytes(32).toString('hex');
-      res.cookie(CSRF_COOKIE, token, {
-        // CSRF cookie must be JS-readable (double-submit pattern), but it
-        // is bound to the host and never carries session info, so dropping
-        // httpOnly is acceptable. In prod we still pin secure + sameSite
-        // and the SPA reads it back via document.cookie on the same host.
+      const isProd = process.env.NODE_ENV === 'production';
+      // __Host- prefix in production: cookie can only be set/cleared over
+      // HTTPS from the exact host (no subdomain spoofing, no path override).
+      // httpOnly: false is required for double-submit pattern (JS must read it).
+      const cookieName = isProd ? `__Host-${CSRF_COOKIE_BASE}` : CSRF_COOKIE_BASE;
+      res.cookie(cookieName, token, {
         httpOnly: false,
-        secure: process.env.NODE_ENV === 'production',
+        secure: isProd,
         sameSite: 'strict',
         path: '/',
       });
