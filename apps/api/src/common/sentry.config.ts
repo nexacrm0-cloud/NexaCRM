@@ -24,7 +24,7 @@ const isInitialized = (() => {
       // Scrub any request data that may have slipped through before transport.
       if (event.request) {
         if (event.request.cookies) {
-          event.request.cookies = '[REDACTED]';
+          event.request.cookies = { '[REDACTED]': '[REDACTED]' };
         }
         if (event.request.headers) {
           const safeHeaders: Record<string, string> = {};
