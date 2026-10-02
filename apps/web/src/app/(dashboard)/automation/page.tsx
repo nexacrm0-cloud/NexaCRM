@@ -288,12 +288,25 @@ export default function AutomationPage() {
                               className="text-[11px]"
                               onClick={() => {
                                 const url = (workflow.triggerConfig as any)?.n8n_workflow_url;
-                                if (url) window.open(url, '_blank');
-                                else
+                                if (typeof url !== 'string') {
                                   toast({
                                     title: 'URL de n8n no configurada',
                                     variant: 'destructive',
                                   });
+                                  return;
+                                }
+                                try {
+                                  const parsed = new URL(url);
+                                  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+                                    throw new Error('URL de n8n inválida');
+                                  }
+                                  window.open(parsed.href, '_blank', 'noopener,noreferrer');
+                                } catch {
+                                  toast({
+                                    title: 'URL de n8n inválida',
+                                    variant: 'destructive',
+                                  });
+                                }
                               }}
                             >
                               <ExternalLink className="mr-1 h-3 w-3" /> Editar

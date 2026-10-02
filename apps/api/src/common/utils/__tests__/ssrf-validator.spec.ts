@@ -11,7 +11,7 @@
 import dns from 'node:dns/promises';
 import { validateWebhookUrl, validateWebhookUrlAsync } from '../ssrf-validator';
 
-jest.doMock('node:dns/promises', () => {
+jest.mock('node:dns/promises', () => {
   const original = jest.requireActual('node:dns/promises');
   return {
     ...original,
@@ -83,12 +83,12 @@ describe('ssrf-validator', () => {
 
   describe('validateWebhookUrlAsync (DNS resolution)', () => {
     it('rejects when DNS resolves to private IP (DNS rebinding defense)', async () => {
-      (dns.lookup as jest.Mock).mockResolvedValueOnce('127.0.0.1');
+      (dns.lookup as jest.Mock).mockResolvedValueOnce([{ address: '127.0.0.1', family: 4 }]);
       await expect(validateWebhookUrlAsync('http://localhost/x')).rejects.toThrow();
     });
 
     it('accepts a public domain that resolves', async () => {
-      (dns.lookup as jest.Mock).mockResolvedValueOnce('8.8.8.8');
+      (dns.lookup as jest.Mock).mockResolvedValueOnce([{ address: '8.8.8.8', family: 4 }]);
       const url = await validateWebhookUrlAsync('http://example.com/');
       expect(url.protocol).toMatch(/^https?:$/);
     });
@@ -98,17 +98,16 @@ describe('ssrf-validator', () => {
       await expect(validateWebhookUrlAsync('http://any-host.invalid/x')).rejects.toThrow();
     });
 
-    it.each([
-      'http://[::1]/x',
-      'http://[fe80::1]/x',
-      'http://[fc00::1]/x',
-    ])('rejects IPv6 literal %s', async (url) => {
-      // IPv6 literals are handled by ipIsPrivate() in the async path.
-      await expect(validateWebhookUrlAsync(url)).rejects.toThrow();
-    });
+    it.each(['http://[::1]/x', 'http://[fe80::1]/x', 'http://[fc00::1]/x'])(
+      'rejects IPv6 literal %s',
+      async (url) => {
+        // IPv6 literals are handled by ipIsPrivate() in the async path.
+        await expect(validateWebhookUrlAsync(url)).rejects.toThrow();
+      },
+    );
 
     it('rejects when DNS returns a private IP (rebinding protection)', async () => {
-      (dns.lookup as jest.Mock).mockResolvedValueOnce('10.0.0.1');
+      (dns.lookup as jest.Mock).mockResolvedValueOnce([{ address: '10.0.0.1', family: 4 }]);
       await expect(validateWebhookUrlAsync('http://attacker.example/x')).rejects.toThrow(
         /privadas o locales/,
       );

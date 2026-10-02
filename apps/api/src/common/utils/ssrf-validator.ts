@@ -60,7 +60,9 @@ function ipIsPrivate(ip: string): boolean {
  * DNS-rebinding and hostname-shortcut (e.g. `0x7f000001`, `2130706433`)
  * bypasses against a text-only regex check.
  */
-export async function validateWebhookUrlAsync(urlString: string): Promise<URL> {
+export async function resolveWebhookTarget(
+  urlString: string,
+): Promise<{ url: URL; addresses: string[] }> {
   let url: URL;
   try {
     url = new URL(urlString);
@@ -81,6 +83,14 @@ export async function validateWebhookUrlAsync(urlString: string): Promise<URL> {
 
   if (BLOCKED_HOSTNAMES.has(hostname.toLowerCase())) {
     throw new BadRequestException('Hostname no permitido');
+  }
+
+  // Direct IP literal: validate it without a DNS round-trip.
+  if (net.isIP(hostname)) {
+    if (ipIsPrivate(hostname)) {
+      throw new BadRequestException('No se permiten direcciones IP privadas o locales');
+    }
+    return { url, addresses: [hostname] };
   }
 
   // Always enforce IP-range checks, even in development. The previous
@@ -104,6 +114,20 @@ export async function validateWebhookUrlAsync(urlString: string): Promise<URL> {
     }
   }
 
+  return { url, addresses };
+}
+
+/**
+ * Validates that a webhook URL is safe to call from the server. Resolves the
+ * hostname and rejects if ANY resolved address is private/loopback/link-local.
+ *
+ * Callers that then perform the outbound request should prefer
+ * `resolveWebhookTarget` and pin the returned addresses to the connection, so
+ * the hostname cannot be re-resolved to a private address between validation
+ * and connect (DNS rebinding / TOCTOU).
+ */
+export async function validateWebhookUrlAsync(urlString: string): Promise<URL> {
+  const { url } = await resolveWebhookTarget(urlString);
   return url;
 }
 

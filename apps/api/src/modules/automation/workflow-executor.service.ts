@@ -1,9 +1,33 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@nexa/database';
 import { DomainEvent } from '@nexa/domain';
-import { WorkflowExecutionStatus } from '@nexa/shared';
 import axios from 'axios';
-import { validateWebhookUrl } from '../../common/utils/ssrf-validator';
+import http from 'node:http';
+import https from 'node:https';
+import net from 'node:net';
+import { resolveWebhookTarget } from '../../common/utils/ssrf-validator';
+
+// Builds an HTTP(S) agent whose DNS lookup returns ONLY the addresses already
+// validated as public by resolveWebhookTarget. This binds the connection to the
+// validated IPs, closing the DNS-rebinding (TOCTOU) window between validation
+// and connect. TLS SNI and the Host header still use the original hostname.
+function createPinnedAgent(protocol: string, addresses: string[]): http.Agent | https.Agent {
+  const pinnedLookup = ((_hostname: string, options: any, callback: any) => {
+    const cb = typeof options === 'function' ? options : callback;
+    const wantAll = options && typeof options === 'object' && options.all;
+    const entries = addresses.map((address) => ({
+      address,
+      family: net.isIPv6(address) ? 6 : 4,
+    }));
+    if (wantAll) cb(null, entries);
+    else if (entries.length > 0) cb(null, entries[0].address, entries[0].family);
+    else cb(new Error('No validated address available'));
+  }) as unknown as net.LookupFunction;
+
+  return protocol === 'https:'
+    ? new https.Agent({ lookup: pinnedLookup, keepAlive: false })
+    : new http.Agent({ lookup: pinnedLookup, keepAlive: false });
+}
 
 @Injectable()
 export class WorkflowExecutor {
@@ -38,19 +62,29 @@ export class WorkflowExecutor {
         throw new Error('No n8n webhook URL configured for this workflow');
       }
 
-      validateWebhookUrl(webhookUrl);
-      const response = await axios.post(webhookUrl, {
-        event: event.eventName,
-        payload: event.payload,
-        metadata: event.metadata,
-        workflowId: workflow.id,
-        organizationId: organizationId,
-      }, {
-        // SECURITY: never follow 30x redirects to SSRF targets. The URL was
-        // validated against the private-IP blocklist above; a redirect could
-        // pivot to an internal endpoint that the original URL didn't expose.
-        maxRedirects: 0,
-      });
+      // SECURITY: resolve the hostname and reject private/loopback/link-local
+      // destinations before connecting, then pin the validated addresses to the
+      // actual socket so a DNS rebind between validation and connection cannot
+      // redirect the request to an internal endpoint.
+      const { url: targetUrl, addresses } = await resolveWebhookTarget(webhookUrl);
+      const pinnedAgent = createPinnedAgent(targetUrl.protocol, addresses);
+      const response = await axios.post(
+        targetUrl.href,
+        {
+          event: event.eventName,
+          payload: event.payload,
+          metadata: event.metadata,
+          workflowId: workflow.id,
+          organizationId: organizationId,
+        },
+        {
+          // SECURITY: never follow 30x redirects to SSRF targets. A redirect could
+          // pivot to an internal endpoint that the original URL didn't expose.
+          maxRedirects: 0,
+          httpAgent: pinnedAgent,
+          httpsAgent: pinnedAgent,
+        },
+      );
 
       return {
         success: true,

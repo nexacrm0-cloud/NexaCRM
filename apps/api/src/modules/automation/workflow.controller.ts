@@ -10,7 +10,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { z } from 'zod';
 import { WorkflowService } from './workflow.service';
 import { WorkflowTransferService } from './workflow-transfer.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -21,30 +20,7 @@ import { UserRole } from '@nexa/shared';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { User } from '@nexa/database';
 import { ZodPipe } from '../../common/pipes/zod.pipe';
-
-const createWorkflowSchema = z.object({
-  name: z.string().min(1).max(255),
-  trigger: z.string().min(1),
-  triggerConfig: z.record(z.unknown()).optional(),
-  actions: z.array(z.record(z.unknown())).optional(),
-  conditions: z.array(z.record(z.unknown())).optional(),
-});
-
-const updateWorkflowSchema = z.object({
-  name: z.string().min(1).max(255).optional(),
-  trigger: z.string().min(1).optional(),
-  triggerConfig: z.record(z.unknown()).optional(),
-  actions: z.array(z.record(z.unknown())).optional(),
-  conditions: z.array(z.record(z.unknown())).optional(),
-});
-
-// SECURITY ALTA-5: `targetOrganizationId` is intentionally absent. The
-// destination is always resolved from `targetEmail` (existing user's org or
-// a freshly provisioned one). Allowing callers to pick any org id let an
-// ADMIN clone a workflow into arbitrary tenants.
-const transferSchema = z.object({
-  targetEmail: z.string().email(),
-});
+import { createWorkflowSchema, updateWorkflowSchema, transferSchema } from './workflow.schemas';
 
 @Controller('automation/workflows')
 @UseGuards(JwtAuthGuard, RolesGuard)

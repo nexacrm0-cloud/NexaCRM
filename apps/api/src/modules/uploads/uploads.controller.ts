@@ -81,7 +81,7 @@ export class UploadsController {
         filename: randomFilename,
       }),
       fileFilter: fileFilter(ALLOWED_IMAGES),
-      limits: { fileSize: 2 * 1024 * 1024 },
+      limits: { fileSize: 2 * 1024 * 1024, files: 1, fields: 0, parts: 2, fieldSize: 1024 },
     }),
   )
   uploadLogo(@UploadedFile(new FileMagicBytesPipe(ALLOWED_IMAGES)) file: Express.Multer.File) {
@@ -99,7 +99,7 @@ export class UploadsController {
         filename: randomFilename,
       }),
       fileFilter: fileFilter(ALLOWED_DOCUMENTS),
-      limits: { fileSize: MAX_SIZE },
+      limits: { fileSize: MAX_SIZE, files: 1, fields: 0, parts: 2, fieldSize: 1024 },
     }),
   )
   uploadDocument(
