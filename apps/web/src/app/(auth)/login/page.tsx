@@ -28,6 +28,21 @@ export default function LoginPage() {
   const captchaTokenRef = useRef<string | undefined>(undefined);
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
+  // If the session was cut (e.g. the 7 day demo window closed) the reason is
+  // kept by the api client so the prospect lands here with an explanation
+  // instead of a blank form.
+  useEffect(() => {
+    try {
+      const reason = window.sessionStorage.getItem('session_expired_reason');
+      if (reason) {
+        setError(reason);
+        window.sessionStorage.removeItem('session_expired_reason');
+      }
+    } catch {
+      // ignore storage failures
+    }
+  }, []);
+
   const onPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');

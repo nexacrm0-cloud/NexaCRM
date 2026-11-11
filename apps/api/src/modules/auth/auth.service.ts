@@ -10,7 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { PrismaService } from '@nexa/database';
-import { JwtPayload } from '@nexa/shared';
+import { DEMO_EXPIRED_MESSAGE, JwtPayload, isDemoExpired } from '@nexa/shared';
 import { EventBusService } from '../../event-bus/event-bus.service';
 import { v4 as uuid } from 'uuid';
 import { TwoFactorService } from './two-factor.service';
@@ -194,11 +194,20 @@ export class AuthService {
   async login(email: string, password: string) {
     const user = await this.prisma.user.findUnique({
       where: { email },
-      include: { organization: { select: { name: true, plan: true } } },
+      include: {
+        organization: { select: { name: true, plan: true, isDemo: true, demoExpiresAt: true } },
+      },
     });
 
     if (!user || !user.isActive) {
       throw new UnauthorizedException('Credenciales inválidas');
+    }
+
+    // Sales-demo tenants are time-boxed to exactly one week. The check lives
+    // here (not only in the JWT strategy) so an expired demo cannot log in
+    // again even with valid credentials.
+    if (isDemoExpired(user.organization)) {
+      throw new UnauthorizedException(DEMO_EXPIRED_MESSAGE);
     }
 
     const valid = await bcrypt.compare(password, user.passwordHash);
@@ -254,6 +263,8 @@ export class AuthService {
         organizationId: user.organizationId,
         organizationName: user.organization.name,
         organizationPlan: (user.organization as any).plan ?? 'free',
+        isDemo: user.organization.isDemo ?? false,
+        demoExpiresAt: user.organization.demoExpiresAt ?? null,
       },
       ...tokens,
     };
@@ -285,11 +296,17 @@ export class AuthService {
 
     const user = await this.prisma.user.findUnique({
       where: { id: pendingSub },
-      include: { organization: { select: { name: true, plan: true } } },
+      include: {
+        organization: { select: { name: true, plan: true, isDemo: true, demoExpiresAt: true } },
+      },
     });
 
     if (!user || !user.isActive) {
       throw new UnauthorizedException('Usuario no encontrado o inactivo');
+    }
+
+    if (isDemoExpired(user.organization)) {
+      throw new UnauthorizedException(DEMO_EXPIRED_MESSAGE);
     }
 
     if (!user.isTwoFactorEnabled) {
@@ -325,6 +342,8 @@ export class AuthService {
         organizationId: user.organizationId,
         organizationName: user.organization.name,
         organizationPlan: user.organization.plan ?? 'free',
+        isDemo: user.organization.isDemo ?? false,
+        demoExpiresAt: user.organization.demoExpiresAt ?? null,
       },
       ...tokens,
     };
@@ -349,11 +368,16 @@ export class AuthService {
           role: true,
           refreshToken: true,
           isActive: true,
+          organization: { select: { isDemo: true, demoExpiresAt: true } },
         },
       });
 
       if (!user || !user.isActive) {
         throw new UnauthorizedException('Usuario no encontrado o inactivo');
+      }
+
+      if (isDemoExpired(user.organization)) {
+        throw new UnauthorizedException(DEMO_EXPIRED_MESSAGE);
       }
 
       const tokenHash = hashRefreshToken(token);
@@ -470,7 +494,9 @@ export class AuthService {
         role: true,
         isTwoFactorEnabled: true,
         organizationId: true,
-        organization: { select: { name: true, plan: true, logo: true } },
+        organization: {
+          select: { name: true, plan: true, logo: true, isDemo: true, demoExpiresAt: true },
+        },
         lastLoginAt: true,
         createdAt: true,
       },
@@ -480,7 +506,12 @@ export class AuthService {
       throw new UnauthorizedException('Usuario no encontrado');
     }
 
-    return user;
+    return {
+      ...user,
+      organizationName: user.organization.name,
+      isDemo: user.organization.isDemo,
+      demoExpiresAt: user.organization.demoExpiresAt,
+    };
   }
 
   async checkOnboardingStatus(userId: string, organizationId: string) {
@@ -518,8 +549,12 @@ export class AuthService {
     lastName: string;
     role: string;
     organizationId: string;
-    organization: { name: string; plan: string };
+    organization: { name: string; plan: string; isDemo?: boolean; demoExpiresAt?: Date | null };
   }) {
+    if (isDemoExpired(user.organization)) {
+      throw new UnauthorizedException(DEMO_EXPIRED_MESSAGE);
+    }
+
     const tokens = await this.generateTokens({
       sub: user.id,
       email: user.email,
@@ -541,6 +576,8 @@ export class AuthService {
         organizationId: user.organizationId,
         organizationName: user.organization.name,
         organizationPlan: user.organization.plan ?? 'free',
+        isDemo: user.organization.isDemo ?? false,
+        demoExpiresAt: user.organization.demoExpiresAt ?? null,
       },
       ...tokens,
     };

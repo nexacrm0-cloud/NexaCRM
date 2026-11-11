@@ -1,4 +1,4 @@
-import { Module, MiddlewareConsumer, NestModule, RequestMethod } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
@@ -6,7 +6,7 @@ import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CsrfMiddleware } from './common/middleware/csrf.middleware';
 import { UserOrIpThrottlerGuard } from './common/guards/user-throttler.guard';
-import { RlsCleanupInterceptor } from './common/interceptors/rls-cleanup.interceptor';
+import { TenantScopeInterceptor } from './common/interceptors/tenant-scope.interceptor';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { ClientsModule } from './modules/clients/clients.module';
@@ -40,7 +40,7 @@ import { SubscriptionsModule } from './modules/subscriptions/subscriptions.modul
 import { WhatsAppModule } from './modules/whatsapp/whatsapp.module';
 import { InternalModule } from './modules/internal/internal.module';
 import { HealthModule } from './modules/health/health.module';
-import { TenantMiddleware } from './common/middleware/tenant.middleware';
+import { DemoModule } from './modules/demo/demo.module';
 
 @Module({
   imports: [
@@ -145,6 +145,7 @@ import { TenantMiddleware } from './common/middleware/tenant.middleware';
     InternalModule,
     InventoryModule,
     HealthModule,
+    DemoModule,
   ],
   providers: [
     {
@@ -152,15 +153,14 @@ import { TenantMiddleware } from './common/middleware/tenant.middleware';
       useClass: UserOrIpThrottlerGuard,
     },
     {
-      // RLS cleanup interceptor: runs AFTER the response stream completes
-      // (finalize semantics) and RESETs the Postgres session role + the
-      // app.organization_id session var set by TenantMiddleware, so the
-      // pooled connection returns to the pool without leftover tenant
-      // state. Registered before the LoggingInterceptor so the log entry
-      // is written first and the reset runs after — both observable as
-      // ordered side-effects.
+      // Tenant scope interceptor: runs AFTER the guards (so the JWT is
+      // already resolved and `req.user.organizationId` is known) and wraps
+      // the whole handler in an interactive transaction whose RLS context is
+      // transaction-scoped (`SET LOCAL ROLE` + `set_config(..., true)`).
+      // Postgres discards it with the transaction, so the pooled connection
+      // returns to the pool clean — no session state to reset afterwards.
       provide: APP_INTERCEPTOR,
-      useClass: RlsCleanupInterceptor,
+      useClass: TenantScopeInterceptor,
     },
   ],
 })
@@ -170,9 +170,5 @@ export class AppModule implements NestModule {
     // so apply it only to the API prefix. It skips its own EXCLUDED_PATHS for
     // unauthenticated flows (login, register, webhooks, etc.).
     consumer.apply(CsrfMiddleware).forRoutes({ path: 'api/v1/*', method: 'ALL' as any });
-    consumer
-      .apply(TenantMiddleware)
-      .exclude({ path: 'api/v1/health', method: RequestMethod.GET })
-      .forRoutes('*');
   }
 }

@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PrismaService } from '@nexa/database';
-import { JwtPayload } from '@nexa/shared';
+import { DEMO_EXPIRED_MESSAGE, JwtPayload, isDemoExpired } from '@nexa/shared';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -34,11 +34,24 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: JwtPayload) {
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
-      select: { id: true, email: true, role: true, organizationId: true, isActive: true },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        organizationId: true,
+        isActive: true,
+        organization: { select: { isDemo: true, demoExpiresAt: true } },
+      },
     });
 
     if (!user || !user.isActive) {
       throw new UnauthorizedException('Usuario no encontrado o inactivo');
+    }
+
+    // Sales-demo tenants are time-boxed: the deadline is checked on every
+    // request, so the access is cut the exact moment the week is over.
+    if (isDemoExpired(user.organization)) {
+      throw new UnauthorizedException(DEMO_EXPIRED_MESSAGE);
     }
 
     return {

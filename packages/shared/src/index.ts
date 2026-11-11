@@ -3,3 +3,4 @@ export * from './types';
 export * from './schemas';
 export * from './automation';
 export * from './automation-schemas';
+export * from './demo';

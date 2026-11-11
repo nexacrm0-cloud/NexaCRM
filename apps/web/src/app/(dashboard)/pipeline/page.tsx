@@ -94,18 +94,43 @@ export default function PipelinePage() {
       }),
   });
 
-  const { data: forecast } = useQuery<{
-    openDealsCount: number;
-    openValue: number;
-    weightedForecast: number;
-    staleDealsCount: number;
-    wonLast30d: number;
-    monthly: Array<{ month: string; weighted: number }>;
-  }>({
+  const { data: forecastRaw } = useQuery<
+    | {
+        openDealsCount: number;
+        openValue: number;
+        weightedForecast: number;
+        staleDealsCount: number;
+        wonLast30d: number;
+        monthly: Array<{ month: string; weighted: number }>;
+      }
+    | {
+        data: {
+          openDealsCount: number;
+          openValue: number;
+          weightedForecast: number;
+          staleDealsCount: number;
+          wonLast30d: number;
+          monthly: Array<{ month: string; weighted: number }>;
+        };
+      }
+  >({
     queryKey: ['pipeline-forecast'],
     queryFn: () => api.get('/pipeline/forecast'),
     refetchInterval: 60_000,
   });
+
+  // The endpoint answers with `{ data: {...} }`; accept the flat shape too so
+  // the KPI cards never fall back to $0 because of an envelope change.
+  const forecast = (forecastRaw && 'data' in forecastRaw ? forecastRaw.data : forecastRaw) as
+    | {
+        openDealsCount: number;
+        openValue: number;
+        weightedForecast: number;
+        staleDealsCount: number;
+        wonLast30d: number;
+        monthly: Array<{ month: string; weighted: number }>;
+      }
+    | undefined;
 
   const createMutation = useMutation({
     mutationFn: (body: CreateDealInput) => api.post('/pipeline/deals', body),

@@ -17,6 +17,10 @@ const EXCLUDED_PATHS = [
   '/api/v1/auth/complete-login',
   '/api/v1/auth/accept-invitation',
   '/api/v1/auth/otp/',
+  // Sales tool: mints a demo tenant + link. It is authenticated with the
+  // internal API key (a header, not a cookie), so the double-submit CSRF
+  // check does not apply to it.
+  '/api/v1/demo/access',
   '/api/v1/webhooks/',
   '/api/v1/agent-actions',
 ];

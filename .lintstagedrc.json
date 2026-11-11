@@ -1,4 +1,5 @@
 {
-  "*.{ts,tsx,js,jsx}": ["prettier --write", "eslint --fix"],
+  "apps/**/*.{ts,tsx,js,jsx}": ["prettier --write", "eslint --fix"],
+  "packages/**/*.{ts,tsx}": ["prettier --write"],
   "*.{json,md,css}": ["prettier --write"]
 }

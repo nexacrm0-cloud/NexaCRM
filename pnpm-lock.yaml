@@ -353,13 +353,22 @@ importers:
 
   packages/database:
     dependencies:
+      '@nexa/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@prisma/client':
         specifier: ^6.0.0
         version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
+      bcryptjs:
+        specifier: ^2.4.3
+        version: 2.4.3
     devDependencies:
       '@nexa/config-typescript':
         specifier: workspace:*
         version: link:../config-typescript
+      '@types/bcryptjs':
+        specifier: ^2.4.6
+        version: 2.4.6
       '@types/node':
         specifier: ^22.20.0
         version: 22.20.0

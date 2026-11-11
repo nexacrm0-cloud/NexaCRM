@@ -107,7 +107,7 @@ export class SubscriptionsService {
   async getCurrentPlan(organizationId: string) {
     const org = await this.prisma.organization.findUnique({
       where: { id: organizationId },
-      select: { id: true, plan: true, name: true },
+      select: { id: true, plan: true, name: true, isDemo: true, demoExpiresAt: true },
     });
     if (!org) throw new NotFoundException('Organización no encontrada');
 
@@ -121,6 +121,8 @@ export class SubscriptionsService {
       organizationId: org.id,
       organizationName: org.name,
       currentPlan: planDetails,
+      isDemo: org.isDemo,
+      demoExpiresAt: org.demoExpiresAt,
       subscription: subscription
         ? {
             id: subscription.id,
@@ -146,9 +148,18 @@ export class SubscriptionsService {
 
     const org = await this.prisma.organization.findUnique({
       where: { id: organizationId },
-      select: { plan: true },
+      select: { plan: true, isDemo: true },
     });
     if (!org) throw new NotFoundException('Organización no encontrada');
+
+    // Los tenants demo son compartidos y se resetean cada semana: nunca deben
+    // generar un cobro real. Para contratar, el prospecto crea su propia
+    // cuenta.
+    if (org.isDemo) {
+      throw new BadRequestException(
+        'La demo no se puede facturar. Escribinos y te activamos el plan en tu propia cuenta.',
+      );
+    }
 
     const currentLevel = PLAN_HIERARCHY[org.plan] ?? 0;
     const targetLevel = PLAN_HIERARCHY[newPlan] ?? 0;
@@ -200,9 +211,15 @@ export class SubscriptionsService {
 
     const org = await this.prisma.organization.findUnique({
       where: { id: organizationId },
-      select: { plan: true },
+      select: { plan: true, isDemo: true },
     });
     if (!org) throw new NotFoundException('Organización no encontrada');
+
+    if (org.isDemo) {
+      throw new BadRequestException(
+        'La demo no se puede facturar. Escribinos y te activamos el plan en tu propia cuenta.',
+      );
+    }
 
     if (org.plan === newPlan) {
       throw new BadRequestException('Ya estás en este plan');

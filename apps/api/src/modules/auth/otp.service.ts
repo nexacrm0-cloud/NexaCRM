@@ -1,5 +1,6 @@
 import { Injectable, Logger, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '@nexa/database';
+import { DEMO_EXPIRED_MESSAGE, isDemoExpired } from '@nexa/shared';
 import { NotificationsService } from '../notifications/notifications.service';
 import { randomInt } from 'crypto';
 import * as bcrypt from 'bcryptjs';
@@ -35,11 +36,20 @@ export class OtpService {
 
     const user = await this.prisma.user.findUnique({
       where: { email: normalized },
-      include: { organization: { select: { name: true } } },
+      include: {
+        organization: { select: { name: true, isDemo: true, demoExpiresAt: true } },
+      },
     });
     if (!user || !user.isActive) {
       // Igual devolvemos ok para no exponer existencia de cuentas
       this.logger.warn(`OTP requested for unknown/inactive email: ${normalized}`);
+      return { ok: true };
+    }
+
+    // Los demos vencidos no reciben códigos: es más claro que el prospecto
+    // se entere al instante en lugar de esperar un email inútil.
+    if (isDemoExpired(user.organization)) {
+      this.logger.warn(`OTP requested for expired demo email: ${normalized}`);
       return { ok: true };
     }
 
@@ -64,6 +74,11 @@ export class OtpService {
     const code = this.generateCode();
     const codeHash = await bcrypt.hash(code, 6);
     const expiresAt = new Date(Date.now() + OTP_TTL_MS);
+
+    // The OTP request starts unauthenticated, so the request transaction is
+    // not bound to a tenant yet. `otp_codes` has RLS, so the write needs the
+    // tenant context before inserting.
+    await this.prisma.bindTenant(user.organizationId);
 
     await this.prisma.otpCode.create({
       data: {
@@ -131,15 +146,31 @@ export class OtpService {
       data: { consumedAt: new Date() },
     });
 
+    const organizationSelect = {
+      name: true,
+      plan: true,
+      currency: true,
+      isDemo: true,
+      demoExpiresAt: true,
+    } as const;
+
     const user = candidate.userId
       ? await this.prisma.user.findUnique({
           where: { id: candidate.userId },
-          include: { organization: { select: { name: true, plan: true, currency: true } } },
+          include: { organization: { select: organizationSelect } },
         })
       : await this.prisma.user.findUnique({
           where: { email: normalized },
-          include: { organization: { select: { name: true, plan: true, currency: true } } },
+          include: { organization: { select: organizationSelect } },
         });
+
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('Usuario no encontrado o inactivo');
+    }
+
+    if (isDemoExpired(user.organization)) {
+      throw new UnauthorizedException(DEMO_EXPIRED_MESSAGE);
+    }
 
     return { user, isNew: false };
   }

@@ -14,6 +14,8 @@
     "db:seed": "tsx src/seed.ts",
     "db:seed:agents": "tsx seed-agents.ts",
     "db:seed:demo": "cross-env SEED_DEMO_IN_PROD=1 tsx src/seed.ts",
+    "db:seed:demo-user": "cross-env SEED_DEMO_IN_PROD=1 tsx src/seed-demo-user.ts",
+    "demo:create": "tsx src/create-demo-access.ts",
     "db:seed:roles": "cross-env SEED_DEMO_IN_PROD=1 tsx seed-roles.ts",
     "db:seed:demo-data": "cross-env SEED_DEMO_IN_PROD=1 tsx seed-demo-data.ts",
     "db:seed:support": "cross-env SEED_DEMO_IN_PROD=1 tsx seed-support.ts",
@@ -22,10 +24,13 @@
     "clean": "echo 'clean ok'"
   },
   "dependencies": {
-    "@prisma/client": "^6.0.0"
+    "@nexa/shared": "workspace:*",
+    "@prisma/client": "^6.0.0",
+    "bcryptjs": "^2.4.3"
   },
   "devDependencies": {
     "@nexa/config-typescript": "workspace:*",
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.20.0",
     "cross-env": "^7.0.3",
     "prisma": "^6.0.0",

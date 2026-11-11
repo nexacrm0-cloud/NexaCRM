@@ -122,23 +122,29 @@ export class PipelineService {
         SELECT 
           ps.id as "stageId",
           ps.name as "stageName",
-          COUNT(d.id) as "dealCount",
-          AVG(EXTRACT(EPOCH FROM (d."updatedAt" - d."createdAt")) / 86400000) as "avgDaysInStage",
-          SUM(CASE WHEN d."stageId" = ps.id AND d."updatedAt" < NOW() - INTERVAL '20 days' THEN 1 ELSE 0 END) as "staleCount"
-        FROM "public"."PipelineStage" ps
-        LEFT JOIN "public"."Deal" d ON d."stageId" = ps.id AND d."organizationId" = ${organizationId}::uuid
-        WHERE ps."organizationId" = ${organizationId}::uuid
-        GROUP BY ps.id, ps.name
+          COUNT(d.id)::int as "dealCount",
+          COALESCE(AVG(EXTRACT(EPOCH FROM (d."updatedAt" - d."createdAt")) / 86400000), 0)::float8 as "avgDaysInStage",
+          -- A CLOSED deal is never "stale": it is done by definition. Only
+          -- the open stages can have stalled opportunities.
+          SUM(CASE WHEN d."stageId" = ps.id
+                    AND ps."isWinStage" = false
+                    AND ps."isLoseStage" = false
+                    AND d."updatedAt" < NOW() - INTERVAL '20 days'
+                   THEN 1 ELSE 0 END)::int as "staleCount"
+        FROM "public"."pipeline_stages" ps
+        LEFT JOIN "public"."deals" d ON d."stageId" = ps.id AND d."organizationId" = ${organizationId}::text
+        WHERE ps."organizationId" = ${organizationId}::text
+        GROUP BY ps.id, ps.name, ps."isWinStage", ps."isLoseStage"
         ORDER BY ps.position ASC
       `,
       this.prisma.$queryRaw`
         SELECT 
           DATE_TRUNC('week', "createdAt") as week,
-          COUNT(*) as deals_created,
-          COUNT(*) FILTER (WHERE "stageId" IN (SELECT id FROM "PipelineStage" WHERE "isWinStage" = true)) as won,
-          COUNT(*) FILTER (WHERE "stageId" IN (SELECT id FROM "PipelineStage" WHERE "isLoseStage" = true)) as lost
-        FROM "public"."Deal"
-        WHERE "organizationId" = ${organizationId}::uuid
+          COUNT(*)::int as deals_created,
+          COUNT(*) FILTER (WHERE "stageId" IN (SELECT id FROM "public"."pipeline_stages" WHERE "isWinStage" = true))::int as won,
+          COUNT(*) FILTER (WHERE "stageId" IN (SELECT id FROM "public"."pipeline_stages" WHERE "isLoseStage" = true))::int as lost
+        FROM "public"."deals"
+        WHERE "organizationId" = ${organizationId}::text
           AND "createdAt" >= NOW() - INTERVAL '12 weeks'
         GROUP BY DATE_TRUNC('week', "createdAt")
         ORDER BY week ASC

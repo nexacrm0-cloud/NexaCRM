@@ -77,7 +77,56 @@ pnpm --filter @nexa/database run seed
 pnpm run dev              # Web: http://localhost:3002 · API: http://localhost:4000
 ```
 
-Usuario demo: `demo@nexa.com` / `demo123`
+### Demo comercial (7 días)
+
+El tenant demo es una organización compartida, precargada con datos de ejemplo y
+limitada a **7 días exactos**. El vencimiento se aplica en el servidor (login,
+refresh y validación del JWT), así que el acceso se corta en el minuto
+exacto; el cron horario resetea el tenant a los datos semilla y abre una
+ventana nueva para el siguiente prospecto.
+
+```bash
+pnpm db:migrate:deploy   # aplica la migración de los campos demo
+pnpm db:seed:demo-user   # (re)crea la demo y abre la ventana de 7 días
+```
+
+Usuario demo: `demo@nexacrm.com` / `demo123`
+(também `admin@nexacrm.com` / `admin123` y `maria@nexacrm.com` / `maria123`)
+
+La demo no genera cobros: el checkout de planes está deshabilitado para
+tenants demo.
+
+#### Un link de demo por prospecto
+
+Además de la demo compartida, se puede abrir una **demo aislada por
+prospecto**: su propia organización (tenant), sus propios datos semilla y un
+link de un solo click (sin password). El prospecto entra directo al dashboard
+y nunca ve datos de otro tenant.
+
+```bash
+# requiere la API corriendo y INTERNAL_API_KEY en el entorno
+export INTERNAL_API_KEY=...            # la misma clave que usa la API
+pnpm demo:create --email=prospecto@acme.com --name="Acme S.A." --contact="Juan Pérez"
+```
+
+```
+✅ Demo creada
+  Prospecto:  prospecto@acme.com
+  Tenant:      demo-acme-s-a-b815bb0d
+  Expira:      2026-11-18T17:55:14.194Z
+
+  Link para el prospecto (un click, sin password):
+  https://mi-dominio/demo/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+- El link viaja en un JWT firmado que **expira con la ventana de demo**: si
+  la ventana se cerró, el link deja de servir y muestra un mensaje.
+- Cada demo es un tenant independiente (aislado por las políticas RLS), así
+  que lo que el prospecto cree o modifique no afecta a nadie más.
+- El mismo endpoint (`POST /api/v1/demo/access`, protegido por
+  `x-internal-api-key`) es el que usa el tooling de ventas.
+- `FRONTEND_URL` define la base del link generado (en producción, el dominio
+  público; en local, `http://localhost:3000`).
 
 ## Contacto
 

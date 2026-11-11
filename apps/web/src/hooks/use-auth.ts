@@ -26,12 +26,22 @@ type User = {
   organizationPlan?: string;
   isTwoFactorEnabled?: boolean;
   lastLoginAt?: string | null;
+  /** True when the account belongs to a time-boxed sales demo tenant. */
+  isDemo?: boolean;
+  /** Absolute deadline of the demo window. */
+  demoExpiresAt?: string | null;
 };
 
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string, captchaToken?: string) => Promise<void>;
+  /**
+   * Adopts a session obtained OUTSIDE the login form (today: the one-click
+   * demo link). It is the same thing `login()` does at the end, but the
+   * credentials came from a signed link instead of the form.
+   */
+  adoptSession: (session: { accessToken: string; user: User }) => void;
   register: (data: {
     email: string;
     password: string;
@@ -72,6 +82,8 @@ export function useAuthProvider() {
           ...raw,
           organizationName: raw.organization?.name ?? raw.organizationName,
           organizationPlan: raw.organization?.plan ?? raw.organizationPlan ?? 'free',
+          isDemo: raw.isDemo ?? raw.organization?.isDemo ?? false,
+          demoExpiresAt: raw.demoExpiresAt ?? raw.organization?.demoExpiresAt ?? null,
         });
       } else {
         setUser(null);
@@ -84,7 +96,11 @@ export function useAuthProvider() {
   }, []);
 
   useEffect(() => {
-    if (PUBLIC_PATHS.includes(pathname)) {
+    // The one-click demo link page authenticates on its own (it exchanges
+    // the signed link for a session). The provider must NOT try to restore a
+    // session there: the 401 would be interpreted as "session expired" and
+    // would bounce the prospect to the login form.
+    if (PUBLIC_PATHS.includes(pathname) || pathname.startsWith('/demo/')) {
       setIsLoading(false);
       return;
     }
@@ -125,6 +141,11 @@ export function useAuthProvider() {
     },
     [router],
   );
+
+  const adoptSession = useCallback((session: { accessToken: string; user: User }) => {
+    api.setAccessToken(session.accessToken);
+    setUser(session.user);
+  }, []);
 
   const loginWithOtp = useCallback(
     async (email: string, code: string) => {
@@ -184,5 +205,14 @@ export function useAuthProvider() {
     router.replace('/login');
   }, [router]);
 
-  return { user, isLoading, login, loginWithOtp, requestOtp, register, logout };
+  return {
+    user,
+    isLoading,
+    login,
+    adoptSession,
+    loginWithOtp,
+    requestOtp,
+    register,
+    logout,
+  };
 }

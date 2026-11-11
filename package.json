@@ -18,6 +18,8 @@
     "db:seed": "pnpm --filter @nexa/database db:seed",
     "db:seed:agents": "pnpm --filter @nexa/database db:seed:agents",
     "db:seed:demo": "pnpm --filter @nexa/database db:seed:demo",
+    "db:seed:demo-user": "pnpm --filter @nexa/database db:seed:demo-user",
+    "demo:create": "pnpm --filter @nexa/database demo:create",
     "db:seed:roles": "pnpm --filter @nexa/database db:seed:roles",
     "db:seed:demo-data": "pnpm --filter @nexa/database db:seed:demo-data",
     "db:seed:support": "pnpm --filter @nexa/database db:seed:support",

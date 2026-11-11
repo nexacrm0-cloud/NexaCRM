@@ -41,6 +41,22 @@ class ApiClient {
     };
   }
 
+  /**
+   * Notifies the app that the session is gone and remembers WHY, so the
+   * login screen can explain it (e.g. "tu demo de 7 días ya terminó")
+   * instead of dropping the prospect on a blank login form.
+   */
+  private notifySessionExpired(reason?: string) {
+    if (reason && typeof window !== 'undefined') {
+      try {
+        window.sessionStorage.setItem('session_expired_reason', reason);
+      } catch {
+        // ignore storage failures
+      }
+    }
+    this.sessionExpiredCallbacks.forEach((cb) => cb());
+  }
+
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
 
@@ -87,21 +103,30 @@ class ApiClient {
       // CSRF failure sin cookie: parece que la sesión está toda rota. Forzar re-login.
       if (response.status === 403 && !getCookie('csrf-token')) {
         this.setAccessToken(null);
-        this.sessionExpiredCallbacks.forEach((cb) => cb());
+        this.notifySessionExpired('CSRF token ausente. Reabri sesión.');
         throw new Error('CSRF token ausente. Reabri sesión.');
       }
       // 401: intentar refresh una vez.
       if (response.status === 401) {
         const refreshed = await this.refreshToken();
-        if (refreshed) {
-          const retryResponse = await fetch(url, config);
+        if (refreshed && this.accessToken) {
+          // The token issued by the refresh MUST be added to the retried
+          // request. `config.headers` was built BEFORE the refresh (without
+          // an Authorization header), so reusing `config` as-is would retry
+          // the request still without credentials → 401 again → the session
+          // would be dropped on every page reload.
+          const retryConfig: RequestInit = {
+            ...config,
+            headers: { ...headers, Authorization: `Bearer ${this.accessToken}` },
+          };
+          const retryResponse = await fetch(url, retryConfig);
           const retryData = await retryResponse.json();
           if (!retryResponse.ok)
             throw new Error(retryData.error?.message || 'Error en la solicitud');
           return retryData;
         }
       }
-      this.sessionExpiredCallbacks.forEach((cb) => cb());
+      this.notifySessionExpired(data.error?.message);
       throw new Error(data.error?.message || 'Sesión expirada');
     }
 

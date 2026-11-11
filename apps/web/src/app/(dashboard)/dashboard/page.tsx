@@ -25,7 +25,7 @@ type DashboardData = {
       type: string;
       description: string;
       createdAt: string;
-      user: { firstName: string; lastName: string; avatarUrl: string | null };
+      user: { firstName: string; lastName: string; avatarUrl: string | null } | null;
       client?: { companyName: string } | null;
       deal?: { title: string } | null;
       task?: { title: string } | null;
@@ -34,9 +34,9 @@ type DashboardData = {
       id: string;
       title: string;
       value: number;
-      client: { companyName: string };
-      stage: { name: string };
-      assignee: { firstName: string; lastName: string };
+      client: { companyName: string } | null;
+      stage: { name: string } | null;
+      assignee: { firstName: string; lastName: string } | null;
     }>;
   };
 };
@@ -251,8 +251,10 @@ export default function DashboardPage() {
                     <div className="space-y-1">
                       <p className="font-display text-[17px] leading-tight">{deal.title}</p>
                       <p className="text-ink-3 text-xs">
-                        {deal.client.companyName} &middot; {deal.assignee.firstName}{' '}
-                        {deal.assignee.lastName}
+                        {deal.client?.companyName ?? 'Sin cliente'}
+                        {deal.assignee?.firstName
+                          ? ` · ${deal.assignee.firstName} ${deal.assignee.lastName ?? ''}`
+                          : ''}
                       </p>
                     </div>
                     <span className="numeral text-naranja text-[17px]">
@@ -285,8 +287,8 @@ export default function DashboardPage() {
                 {summary.recentActivity?.slice(0, 8).map((activity: any) => (
                   <li key={activity.id} className="flex items-start gap-3">
                     <span className="numeral bg-ink text-paper inline-flex h-7 w-7 shrink-0 items-center justify-center text-[11px]">
-                      {activity.user.firstName.charAt(0)}
-                      {activity.user.lastName.charAt(0)}
+                      {(activity.user?.firstName ?? '').charAt(0)}
+                      {(activity.user?.lastName ?? '').charAt(0)}
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm leading-snug">{activity.description}</p>

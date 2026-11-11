@@ -52,7 +52,8 @@ export function PipelineFunnel() {
     );
   }
 
-  const chartData = data?.data ?? [];
+  const raw = data as PipelineFunnelData | undefined;
+  const chartData = Array.isArray(raw) ? raw : (raw?.data ?? []);
 
   return (
     <Card>

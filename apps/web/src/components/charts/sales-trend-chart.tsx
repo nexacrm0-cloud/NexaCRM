@@ -15,9 +15,12 @@ import {
   Tooltip,
 } from 'recharts';
 
-type SalesTrendData = {
-  data: Array<{ month: string; sales: number }>;
-};
+type SalesTrendPoint = { month: string; sales: number };
+
+// The endpoint may answer with the plain array or wrapped in `{ data: [...] }`
+// (both shapes are in use across the API). The chart accepts either one so a
+// cosmetic envelope change can never blank the graph.
+type SalesTrendData = SalesTrendPoint[] | { data: SalesTrendPoint[] };
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
@@ -54,7 +57,8 @@ export function SalesTrendChart() {
     );
   }
 
-  const chartData = data?.data ?? [];
+  const raw = data as SalesTrendData | undefined;
+  const chartData: SalesTrendPoint[] = Array.isArray(raw) ? raw : (raw?.data ?? []);
   const maxSales = Math.max(...chartData.map((d) => d.sales), 1);
 
   return (
