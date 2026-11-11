@@ -1,0 +1,12 @@
+-- The quote number sequence used by the demo fixture (and by the quote
+-- endpoints that allocate Q-XXXXXX numbers).
+--
+-- It used to live in `migrations/0000_rls_and_sequence.sql`, a loose file
+-- that Prisma never applied (it is not inside a <timestamp>_<name>/ folder),
+-- so on a fresh database (e.g. Render Postgres, bootstrapped with
+-- `prisma migrate deploy`) the sequence was missing and the demo seed failed
+-- with `relation "quote_number_seq" does not exist`.
+--
+-- IF NOT EXISTS keeps it idempotent: on databases that already have it
+-- (created by hand or by the legacy script) this is a no-op.
+CREATE SEQUENCE IF NOT EXISTS quote_number_seq START 1;

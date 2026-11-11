@@ -1,6 +1,22 @@
 -- ============================================================
--- RLS (Row-Level Security) para multi-tenancy
--- Ejecutar después de la migración de Prisma
+-- LEGACY — NO lo ejecutes a mano.
+--
+-- Este archivo está SUELTO en la carpeta migrations (fuera de una carpeta
+-- <timestamp>_<nombre>/), así que `prisma migrate deploy` NUNCA lo aplica.
+-- Es un borrador anterior de la migración canónica de RLS:
+--
+--   -> packages/database/prisma/migrations/20260808120000_enable_rls/
+--
+-- que ya incluye todas las policies, los roles (nexa_app / nexa_admin) y
+-- los GRANTs (además de las tablas que faltaban acá).
+--
+-- Lo único que aportaba y que no estaba en la migración canónica era la
+-- secuencia de números de presupuesto; esa quedó en:
+--
+--   -> packages/database/prisma/migrations/20261107000000_ensure_quote_number_seq/
+--
+-- Ejecutar este archivo sobre una base ya migrada falla (las policies y los
+-- roles ya existen). No lo ejecutes.
 -- ============================================================
 
 -- Quote number sequence (atómico)
