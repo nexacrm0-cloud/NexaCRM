@@ -128,6 +128,31 @@ pnpm demo:create --email=prospecto@acme.com --name="Acme S.A." --contact="Juan P
 - `FRONTEND_URL` define la base del link generado (en producción, el dominio
   público; en local, `http://localhost:3000`).
 
+#### Publicar el link
+
+`FRONTEND_URL` es la base de los links, así que tiene que ser una URL que el
+prospecto pueda abrir:
+
+- **Render (recomendado en producción)**: `FRONTEND_URL=https://nexa-web-c0ab.onrender.com`.
+  El deploy es automático con cada commit a `master`
+  (`autoDeployTrigger: commit` en `render.yaml`).
+- **Túnel de Cloudflare (para staging o mientras Render no esté disponible)**:
+  ```bash
+  cloudflared tunnel --url http://localhost:3000 --no-autoupdate
+  # -> https://<algo>.trycloudflare.com
+  ```
+  Ojo: el túnel "quick" cambia de URL en cada reinicio y no garantiza uptime.
+  Para una URL estable hay que crear un _named tunnel_ con una cuenta de
+  Cloudflare:
+  ```bash
+  cloudflared tunnel login
+  cloudflared tunnel create nexa-demo
+  cloudflared tunnel route dns nexa-demo demo.tudominio.com
+  cloudflared tunnel run nexa-demo
+  ```
+  Con eso `FRONTEND_URL=https://demo.tudominio.com` queda fijo y los links
+  emitidos siguen funcionando.
+
 ## Contacto
 
 **nexacrm0@gmail.com**
