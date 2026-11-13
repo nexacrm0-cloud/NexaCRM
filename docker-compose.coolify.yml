@@ -58,7 +58,6 @@ services:
       context: .
       dockerfile: apps/api/Dockerfile
     restart: 'no'
-    exclude_from_hc: true
     entrypoint: ['npx', 'prisma', 'migrate', 'deploy']
     working_dir: /app/packages/database
     environment:
@@ -90,6 +89,7 @@ services:
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET es requerido}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET es requerido}
+      JWT_2FA_PENDING_SECRET: ${JWT_2FA_PENDING_SECRET:?JWT_2FA_PENDING_SECRET es requerido}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:?INTERNAL_API_KEY es requerido}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       GROQ_API_KEY: ${GROQ_API_KEY:-}
@@ -127,6 +127,12 @@ services:
       AWS_ENDPOINT: ${AWS_ENDPOINT:-}
     expose:
       - '4000'
+    # Routing hacia Traefik (modo raw compose: las labels se escriben aca).
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.nexacrm-api.rule=Host(`api.192.168.0.101.nip.io`)
+      - traefik.http.routers.nexacrm-api.entryPoints=http
+      - traefik.http.services.nexacrm-api.loadbalancer.server.port=4000
     networks:
       - coolify
 
@@ -151,6 +157,12 @@ services:
       SENTRY_RELEASE: ${SENTRY_RELEASE:-}
     expose:
       - '3000'
+    # Routing hacia Traefik (modo raw compose: las labels se escriben aca).
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.nexacrm-web.rule=Host(`nexa.192.168.0.101.nip.io`)
+      - traefik.http.routers.nexacrm-web.entryPoints=http
+      - traefik.http.services.nexacrm-web.loadbalancer.server.port=3000
     networks:
       - coolify
 
