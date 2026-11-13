@@ -22,13 +22,16 @@ COPY --from=deps /app/packages/database/prisma ./packages/database/prisma
 COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
 COPY --from=deps /app/packages/domain/node_modules ./packages/domain/node_modules
 COPY . .
+# BUILD ORDER MATTERS.
+# @nexa/shared, @nexa/domain y @nexa/database resuelven a dist/index.js
+# (dist/ esta en .gitignore, asi que no viene en el contexto de build).
+# Por eso hay que compilarlos ANTES de los que los importan:
+#   - @nexa/database/src/demo-fixture.ts importa @nexa/shared
+#   - @nexa/api importa @nexa/shared y @nexa/domain
+RUN pnpm --filter @nexa/shared build
+RUN pnpm --filter @nexa/domain build
 RUN pnpm --filter @nexa/database db:generate
 RUN pnpm --filter @nexa/database build
-# @nexa/api imports @nexa/shared, which resolves to dist/index.js — it must
-# be compiled before the API build. dist/ is gitignored/excluded from context.
-RUN pnpm --filter @nexa/shared build
-# @nexa/api also imports @nexa/domain (DomainEvent etc), same dist requirement.
-RUN pnpm --filter @nexa/domain build
 RUN pnpm --filter @nexa/api build
 
 FROM base AS prod-deps
@@ -75,6 +78,6 @@ EXPOSE 4000
 # deploy fails; if PRISMA_BOOTSTRAP_RESET=true we reset (safe: DB is empty at
 # bootstrap) and re-apply the full chain from scratch. On healthy deploys
 # migrate deploy succeeds and the reset branch never runs, so the flag can be
-# left in place — remove it once the database is up if you want zero data loss
+# left in place - remove it once the database is up if you want zero data loss
 # on a future failed migration.
 CMD ["sh", "-c", "set -e; S=packages/database/prisma/schema.prisma; if prisma migrate deploy --schema=$S; then :; elif [ \"$PRISMA_BOOTSTRAP_RESET\" = \"true\" ]; then echo 'Migration failed, running one-time bootstrap reset (PRISMA_BOOTSTRAP_RESET=true)'; prisma migrate reset --force --skip-seed --schema=$S; prisma migrate deploy --schema=$S; else exit 1; fi; node apps/api/dist/main"]
