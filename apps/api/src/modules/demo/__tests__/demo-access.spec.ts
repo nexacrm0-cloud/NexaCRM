@@ -11,7 +11,6 @@ import type { PrismaService } from '@nexa/database';
 import { AuthService } from '../../auth/auth.service';
 import { JwtStrategy } from '../../../common/strategies/jwt.strategy';
 import type { JwtService } from '@nestjs/jwt';
-
 jest.mock('bcryptjs', () => ({
   compare: jest.fn(),
   hash: jest.fn(),
@@ -185,6 +184,54 @@ describe('Ventana de demo de 7 días', () => {
         id: 'user-1',
         organizationId: 'org-1',
       });
+    });
+  });
+
+  describe('AuthService.issueSession', () => {
+    // REGRESSION: the one-click demo link used to issue the refresh token
+    // WITHOUT registering its hash on the user. The rotation check on
+    // /auth/refresh then rejected it with TOKEN_STOLEN and the prospect was
+    // bounced to the login form on the first page reload.
+    const buildAuthService = () => {
+      const prisma = {
+        user: {
+          update: jest.fn().mockResolvedValue({}),
+        },
+      };
+      const jwt = {
+        signAsync: jest
+          .fn()
+          .mockResolvedValueOnce('access-token')
+          .mockResolvedValueOnce('refresh-token'),
+      };
+
+      const service = new AuthService(
+        prisma as unknown as PrismaService,
+        jwt as unknown as JwtService,
+        {} as never,
+        {} as never,
+      );
+      return { service, prisma, jwt };
+    };
+
+    it('registra el refresh token hasheado en el usuario', async () => {
+      const { service, prisma } = buildAuthService();
+
+      const tokens = await service.issueSession({
+        id: 'user-1',
+        email: 'demo@nexacrm.com',
+        organizationId: 'org-1',
+        role: 'OWNER',
+      });
+
+      expect(tokens.accessToken).toBe('access-token');
+      expect(tokens.refreshToken).toBe('refresh-token');
+
+      const updateArg = prisma.user.update.mock.calls[0][0];
+      // The stored value must be the HASH, never the token itself.
+      expect(updateArg.data.refreshToken).toBeDefined();
+      expect(updateArg.data.refreshToken).not.toBe('refresh-token');
+      expect(updateArg.data.refreshToken).toMatch(/^[0-9a-f]{64}$/);
     });
   });
 });

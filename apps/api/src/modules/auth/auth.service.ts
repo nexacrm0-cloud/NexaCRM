@@ -423,6 +423,39 @@ export class AuthService {
     });
   }
 
+  /**
+   * Issues a session for a user that is ALREADY authenticated.
+   *
+   * Used by the one-click demo link: the prospect never types credentials, so
+   * there is no password check to do — but the session still has to be a
+   * first-class one: the hashed refresh token MUST be stored, otherwise the
+   * rotation check on /auth/refresh rejects it with TOKEN_STOLEN the first
+   * time the page is reloaded.
+   */
+  async issueSession(user: {
+    id: string;
+    email: string;
+    organizationId: string;
+    role: string;
+  }): Promise<{ accessToken: string; refreshToken: string }> {
+    const tokens = await this.generateTokens({
+      sub: user.id,
+      email: user.email,
+      organizationId: user.organizationId,
+      role: user.role as JwtPayload['role'],
+    });
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        refreshToken: hashRefreshToken(tokens.refreshToken),
+        lastLoginAt: new Date(),
+      },
+    });
+
+    return tokens;
+  }
+
   async forgotPassword(email: string): Promise<{ token: string | null; message: string }> {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) {

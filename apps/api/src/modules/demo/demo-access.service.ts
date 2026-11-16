@@ -4,6 +4,7 @@ import { randomBytes } from 'crypto';
 import { PrismaService } from '@nexa/database';
 import { DEMO_ACCOUNTS, DemoAccount, demoExpiryFromNow, resetDemoTenant } from '@nexa/database';
 import { DEMO_EXPIRED_MESSAGE, isDemoExpired } from '@nexa/shared';
+import { AuthService } from '../auth/auth.service';
 
 export type DemoAccessRequest = {
   /** Email of the prospect: it becomes the OWNER login of their own tenant. */
@@ -42,6 +43,7 @@ export class DemoAccessService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private authService: AuthService,
   ) {}
 
   /**
@@ -162,36 +164,11 @@ export class DemoAccessService {
       throw new UnauthorizedException(DEMO_EXPIRED_MESSAGE);
     }
 
-    const tokenId = randomBytes(16).toString('hex');
-
-    const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(
-        {
-          sub: user.id,
-          email: user.email,
-          organizationId: user.organizationId,
-          role: user.role,
-          tokenId,
-        },
-        // Same secret as the rest of the API: this token has to be accepted
-        // by the JWT strategy / the access guard.
-        { secret: process.env.JWT_SECRET },
-      ),
-      this.jwtService.signAsync(
-        {
-          sub: user.id,
-          tokenId,
-          email: user.email,
-          organizationId: user.organizationId,
-          role: user.role,
-        },
-        { secret: process.env.JWT_REFRESH_SECRET, expiresIn: '24h' },
-      ),
-    ]);
-
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: { lastLoginAt: new Date() },
+    const { accessToken, refreshToken } = await this.authService.issueSession({
+      id: user.id,
+      email: user.email,
+      organizationId: user.organizationId,
+      role: user.role,
     });
 
     return {
