@@ -2,6 +2,7 @@
   "name": "nexa-crm",
   "private": true,
   "version": "1.0.0",
+  "packageManager": "pnpm@9.15.0",
   "description": "Nexa CRM - Intelligent CRM for SMBs",
   "scripts": {
     "dev": "turbo dev",
