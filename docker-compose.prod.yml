@@ -36,10 +36,17 @@ services:
     entrypoint: ['npx', 'prisma', 'migrate', 'deploy']
     working_dir: /app/packages/database
     environment:
-      # IMPORTANT: migrate runs as nexa_admin (BYPASSRLS) because it needs
-      # to CREATE/ALTER/DROP tables across all tenants. NEVER point the
-      # api service at this URL — it bypasses RLS.
-      DATABASE_URL: postgresql://${DB_ADMIN_USER:-nexa_admin}:${DB_ADMIN_PASSWORD:?DB_ADMIN_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-nexacrm}?schema=public
+      # IMPORTANT: migrate runs as the DATABASE OWNER (POSTGRES_USER), NOT as
+      # nexa_admin. The RLS migration creates `nexa_app` / `nexa_admin` with
+      # `NOLOGIN` (they are role switches, not login roles) and ends with
+      # `GRANT nexa_app, nexa_admin TO CURRENT_USER`, so the owner can
+      # SET ROLE into them. A NOLOGIN role cannot be used in a connection
+      # string at all.
+      #
+      # NEVER point the api service at nexa_app either: it must connect as the
+      # owner too, because the app does `SET LOCAL ROLE nexa_app` per request
+      # (see PrismaService.runInTenantScope) to make the RLS policies bite.
+      DATABASE_URL: postgresql://${POSTGRES_USER:-nexa}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-nexacrm}?schema=public
     depends_on:
       postgres:
         condition: service_healthy
@@ -62,18 +69,28 @@ services:
       NODE_ENV: production
       API_PORT: '4000'
       FRONTEND_URL: ${FRONTEND_URL:?FRONTEND_URL is required}
-      # Runtime DATABASE_URL points at nexa_app (NOBYPASSRLS). The
-      # TenantMiddleware additionally does `SET ROLE nexa_app` per request
-      # to enforce fail-closed Row Level Security. See migration
-      # 20260808120000_enable_rls for the role + policy definitions.
-      DATABASE_URL: postgresql://${DB_APP_USER:-nexa_app}:${DB_APP_PASSWORD:?DB_APP_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-nexacrm}?schema=public
-      # Role name the TenantMiddleware swaps to per request. Default is
-      # nexa_app (matches the migration). Override only if a downstream
+      # Runtime DATABASE_URL points at the database OWNER (the same role the
+      # migrations use). The API then does `SET LOCAL ROLE nexa_app` on every
+      # request inside its tenant transaction (PrismaService.runInTenantScope),
+      # which is what makes the Row Level Security policies apply (fail-closed:
+      # an empty tenant scope sees zero rows).
+      #
+      # The owner is a member of nexa_app (the RLS migration grants it), so
+      # the SET ROLE succeeds. The roles are NOLOGIN on purpose: they are
+      # never used to authenticate, only to switch into.
+      DATABASE_URL: postgresql://${POSTGRES_USER:-nexa}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-nexacrm}?schema=public
+      # Role name the app switches to per request. Default is nexa_app
+      # (matches the RLS migration). Override only if a downstream
       # operator renamed the role.
       RLS_APP_ROLE: ${RLS_APP_ROLE:-nexa_app}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET is required}
+      # Dedicated secret for the short-lived "2FA pending" token.
+      JWT_2FA_PENDING_SECRET: ${JWT_2FA_PENDING_SECRET:?JWT_2FA_PENDING_SECRET is required}
+      # Dedicated secret for the one-click demo links (POST /demo/access).
+      # Falls back to JWT_SECRET when unset.
+      JWT_DEMO_ACCESS_SECRET: ${JWT_DEMO_ACCESS_SECRET:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:?INTERNAL_API_KEY is required}
       WHATSAPP_VERIFY_TOKEN: ${WHATSAPP_VERIFY_TOKEN:-}

@@ -127,6 +127,8 @@ pnpm demo:create --email=prospecto@acme.com --name="Acme S.A." --contact="Juan P
   `x-internal-api-key`) es el que usa el tooling de ventas.
 - `FRONTEND_URL` define la base del link generado (en producción, el dominio
   público; en local, `http://localhost:3000`).
+- Para el deploy en tu propio VPS (web + API + base, con Docker) mirá
+  [`DEPLOY_VPS.md`](./DEPLOY_VPS.md).
 
 #### Publicar el link
 

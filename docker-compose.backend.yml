@@ -1,0 +1,155 @@
+# =============================================================================
+# Backend de Nexa CRM (Postgres + Redis + API) para un VPS propio.
+#
+# Es la variante "aditiva" de docker-compose.prod.yml: NO incluye web ni
+# nginx, así que no toca el deploy que ya tenés corriendo. La API queda
+# escuchando en 127.0.0.1:4000 y tu reverse proxy actual reenvía /api/* a ella.
+#
+#   docker compose -f docker-compose.backend.yml up -d --build
+#
+# Requisitos:
+#   - .env.prod (copiado de .env.prod.example) con FRONTEND_URL apuntando al
+#     dominio publico (es la base de los links de demo).
+#   - La web se reconstruye con NEXT_PUBLIC_API_URL=/api/v1 (relativo) para
+#     que el navegador use el proxy del mismo origen y no haga cross-origin.
+# =============================================================================
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nexa-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-nexa}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-nexacrm}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-nexa} -d ${POSTGRES_DB:-nexacrm}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: nexa-redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD}', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: nexa-migrate
+    entrypoint: ['npx', 'prisma', 'migrate', 'deploy']
+    working_dir: /app/packages/database
+    environment:
+      # IMPORTANT: migrate runs as the DATABASE OWNER (POSTGRES_USER), NOT as
+      # nexa_admin. The RLS migration creates `nexa_app` / `nexa_admin` with
+      # `NOLOGIN` (they are role switches, not login roles) and ends with
+      # `GRANT nexa_app, nexa_admin TO CURRENT_USER`, so the owner can
+      # SET ROLE into them. A NOLOGIN role cannot be used in a connection
+      # string at all.
+      DATABASE_URL: postgresql://${POSTGRES_USER:-nexa}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-nexacrm}?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: 'no'
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: nexa-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: production
+      API_PORT: '4000'
+      # Public base of the app. It is the base of the one-click demo links, so
+      # it MUST be the public domain (e.g. https://nexa.nexacrm.dpdns.org).
+      FRONTEND_URL: ${FRONTEND_URL:?FRONTEND_URL is required}
+      # Runtime DATABASE_URL points at the database OWNER (the same role the
+      # migrations use). The API then does `SET LOCAL ROLE nexa_app` on every
+      # request inside its tenant transaction (PrismaService.runInTenantScope),
+      # which is what makes the Row Level Security policies apply (fail-closed:
+      # an empty tenant scope sees zero rows).
+      #
+      # The owner is a member of nexa_app (the RLS migration grants it), so
+      # the SET ROLE succeeds. The roles are NOLOGIN on purpose: they are
+      # never used to authenticate, only to switch into.
+      DATABASE_URL: postgresql://${POSTGRES_USER:-nexa}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-nexacrm}?schema=public
+      # Role name the app switches to per request. Default is nexa_app
+      # (matches the RLS migration). Override only if a downstream
+      # operator renamed the role.
+      RLS_APP_ROLE: ${RLS_APP_ROLE:-nexa_app}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET is required}
+      # Dedicated secret for the short-lived "2FA pending" token.
+      JWT_2FA_PENDING_SECRET: ${JWT_2FA_PENDING_SECRET:?JWT_2FA_PENDING_SECRET is required}
+      # Dedicated secret for the one-click demo links (POST /demo/access).
+      # Falls back to JWT_SECRET when unset.
+      JWT_DEMO_ACCESS_SECRET: ${JWT_DEMO_ACCESS_SECRET:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:?INTERNAL_API_KEY is required}
+      WHATSAPP_VERIFY_TOKEN: ${WHATSAPP_VERIFY_TOKEN:-}
+      WHATSAPP_APP_SECRET: ${WHATSAPP_APP_SECRET:-}
+      WHATSAPP_TOKEN: ${WHATSAPP_TOKEN:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@nexacrm.com}
+      WORKFLOWS_ENABLED: ${WORKFLOWS_ENABLED:-false}
+      ALLOW_STUB_PAYMENT_IN_PROD: ${ALLOW_STUB_PAYMENT_IN_PROD:-}
+      PAYMENT_PROVIDER_KIND: ${PAYMENT_PROVIDER_KIND:-stub}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+      MP_ACCESS_TOKEN: ${MP_ACCESS_TOKEN:-}
+      MP_SANDBOX_MODE: ${MP_SANDBOX_MODE:-false}
+      MP_WEBHOOK_URL: ${MP_WEBHOOK_URL:-}
+      MP_WEBHOOK_SECRET: ${MP_WEBHOOK_SECRET:-}
+      MP_API_BASE_URL: ${MP_API_BASE_URL:-https://api.mercadopago.com}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      SENTRY_RELEASE: ${SENTRY_RELEASE:-}
+      SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE:-0.1}
+      SENTRY_PROFILES_SAMPLE_RATE: ${SENTRY_PROFILES_SAMPLE_RATE:-0.1}
+      AFIP_ENABLED: ${AFIP_ENABLED:-false}
+      AFIP_PROVIDER_KIND: ${AFIP_PROVIDER_KIND:-stub}
+      AFIP_CUIT: ${AFIP_CUIT:-}
+      AFIP_CERT_PATH: ${AFIP_CERT_PATH:-}
+      AFIP_KEY_PATH: ${AFIP_KEY_PATH:-}
+      AFIP_ENV: ${AFIP_ENV:-testing}
+      ALLOW_STUB_AFIP_IN_PROD: ${ALLOW_STUB_AFIP_IN_PROD:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-}
+      AWS_REGION: ${AWS_REGION:-auto}
+      AWS_ENDPOINT: ${AWS_ENDPOINT:-}
+    expose:
+      - '4000'
+    ports:
+      # Solo loopback: la API no queda expuesta a internet. Tu reverse proxy
+      # (nginx/caddy del host) la alcanza por 127.0.0.1:4000.
+      - '127.0.0.1:4000:4000'
+    extra_hosts:
+      # Para que un contenedor del web (tu compose) pueda alcanzar la API
+      # por nombre de host en vez de por IP.
+      - 'host.docker.internal:host-gateway'
+
+volumes:
+  postgres_data:
+  redis_data:

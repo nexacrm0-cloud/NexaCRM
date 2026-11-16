@@ -7,6 +7,9 @@ dist/
 .env.*.local
 .env.prod
 .env.prod.*
+# ...but the TEMPLATE must be tracked: it is the documented list of the
+# variables a production deploy needs (it holds no secrets).
+!.env.prod.example
 .env.production
 .env.*.production
 .DS_Store

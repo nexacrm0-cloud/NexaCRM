@@ -20,10 +20,20 @@ function validateEnv() {
         'JWT_2FA_PENDING_SECRET',
         'DATABASE_URL',
         'INTERNAL_API_KEY',
-        'WHATSAPP_APP_SECRET',
         'FRONTEND_URL',
       ]
     : ['JWT_SECRET', 'JWT_REFRESH_SECRET', 'JWT_2FA_PENDING_SECRET', 'DATABASE_URL'];
+
+  // WhatsApp is an OPTIONAL integration: the provider stays inactive without
+  // it (it logs "no configurado"). It was listed as always-required, which
+  // made a production deploy impossible for operators who do not use it yet.
+  // Now it is required only when the operator configured ANY of its
+  // variables — a half-configured integration is still a hard error.
+  const whatsappVars = ['WHATSAPP_APP_SECRET', 'WHATSAPP_VERIFY_TOKEN', 'WHATSAPP_TOKEN'];
+  if (whatsappVars.some((v) => Boolean(process.env[v]))) {
+    required.push(...whatsappVars);
+  }
+
   const missing = required.filter((v) => !process.env[v]);
   if (missing.length > 0) {
     throw new Error(`FALTAN variables de entorno críticas: ${missing.join(', ')}`);
