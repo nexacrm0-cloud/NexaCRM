@@ -3,9 +3,9 @@
 Guía para servir la app (web + API + base) en un servidor propio con Docker,
 usando tu propio dominio, y para generar links de demo de un click.
 
-El blueprint de Render (`render.yaml`) cubre el mismo stack; esta guía es la
-variante self-hosted, con la diferencia clave de que **la API y la base viven
-en tu servidor** (Render queda como opción, no como dependencia).
+El deploy oficial es **Coolify + Traefik** (ver la sección 0). Esta guía
+cubre el mismo stack para un VPS propio, con la diferencia clave de que **la
+API y la base viven en tu servidor** (sin depender de ningún hosting externo).
 
 ---
 
@@ -17,13 +17,22 @@ no hay nginx/certbot (los maneja Coolify).
 
 En el panel de Coolify, en las **variables de entorno** de la app:
 
-| Variable                     | Valor                            | Por qué                                                                                                                                             |
-| ---------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `FRONTEND_URL`               | `https://nexa.nexacrm.dpdns.org` | es la base de los links de demo                                                                                                                     |
-| `NEXT_PUBLIC_API_URL`        | `/api/v1`                        | **relativo**: el browser usa el proxy del mismo origen. Si queda apuntando a un dominio viejo (ej. Render), el web sigue llamando ahí y no a tu API |
-| `JWT_DEMO_ACCESS_SECRET`     | `openssl rand -base64 64`        | secret de los links de demo (opcional: cae en `JWT_SECRET`)                                                                                         |
-| `ALLOW_STUB_PAYMENT_IN_PROD` | `1`                              | la demo **no debe cobrar de verdad**; sin este flag la API se niega a arrancar en producción                                                        |
-| `INTERNAL_API_KEY`           | `openssl rand -hex 32`           | habilita `POST /demo/access` (crear demos)                                                                                                          |
+**El listado completo** (las 50 variables, con su valor por defecto y el
+comentario de cada una) está en [`.env.coolify.example`](./.env.coolify.example).
+Copiá ese archivo y reemplazá los `__CHANGE_ME__`.
+
+**No hay que definir** (las arma el compose solo): `DATABASE_URL`, `REDIS_URL`,
+`API_PORT`, `API_URL`, `NODE_ENV`.
+
+Las cinco que importan de verdad:
+
+| Variable                     | Valor                            | Por qué                                                                                                                                |
+| ---------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `FRONTEND_URL`               | `https://nexa.nexacrm.dpdns.org` | es la base de los links de demo                                                                                                        |
+| `NEXT_PUBLIC_API_URL`        | `/api/v1`                        | **relativo**: el browser usa el proxy del mismo origen. Si queda apuntando a un dominio viejo, el web sigue llamando ahí y no a tu API |
+| `JWT_DEMO_ACCESS_SECRET`     | `openssl rand -base64 64`        | secret de los links de demo (opcional: cae en `JWT_SECRET`)                                                                            |
+| `ALLOW_STUB_PAYMENT_IN_PROD` | `1`                              | la demo **no debe cobrar de verdad**; sin este flag la API se niega a arrancar en producción                                           |
+| `INTERNAL_API_KEY`           | `openssl rand -hex 32`           | habilita `POST /demo/access` (crear demos)                                                                                             |
 
 Después: **redeploy del web** (el bundle lleva la API_URL adentro, así que
 cambiar `NEXT_PUBLIC_API_URL` requiere reconstruir la imagen).
@@ -31,6 +40,10 @@ cambiar `NEXT_PUBLIC_API_URL` requiere reconstruir la imagen).
 Con `NEXT_PUBLIC_API_URL=/api/v1` el browser pide `/api/v1/*` al mismo origen
 y el rewrite interno de Next (`next.config.js`) lo reenvía a
 `http://api:4000` → sin CORS y con las cookies de sesión funcionando.
+
+> **WhatsApp**: si definís UNA sola variable `WHATSAPP_*`, la API exige las
+> TRES (una integración a medias es un error de configuración). Si no usás
+> WhatsApp, dejá las tres vacías.
 
 ## 1. Requisitos (deploy manual, sin Coolify)
 
