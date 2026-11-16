@@ -128,9 +128,10 @@ services:
     expose:
       - '4000'
     # Routing hacia Traefik (modo raw compose: las labels se escriben aca).
+    # TLS lo termina Cloudflare (tunel), por eso el entrypoint es http.
     labels:
       - traefik.enable=true
-      - traefik.http.routers.nexacrm-api.rule=Host(`api.192.168.0.101.nip.io`)
+      - traefik.http.routers.nexacrm-api.rule=Host(`api.nexacrm.dpdns.org`)
       - traefik.http.routers.nexacrm-api.entryPoints=http
       - traefik.http.services.nexacrm-api.loadbalancer.server.port=4000
     networks:
@@ -158,9 +159,10 @@ services:
     expose:
       - '3000'
     # Routing hacia Traefik (modo raw compose: las labels se escriben aca).
+    # TLS lo termina Cloudflare (tunel), por eso el entrypoint es http.
     labels:
       - traefik.enable=true
-      - traefik.http.routers.nexacrm-web.rule=Host(`nexa.192.168.0.101.nip.io`)
+      - traefik.http.routers.nexacrm-web.rule=Host(`nexa.nexacrm.dpdns.org`)
       - traefik.http.routers.nexacrm-web.entryPoints=http
       - traefik.http.services.nexacrm-web.loadbalancer.server.port=3000
     networks:
