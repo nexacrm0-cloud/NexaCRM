@@ -26,7 +26,10 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
+      # `next lint` is deprecated and can ask for interactive input, which
+      # always fails on CI. Running eslint directly does the same thing.
+      - run: pnpm --filter @nexa/api lint
+      - run: pnpm --filter @nexa/web exec eslint "src/**/*.{ts,tsx}"
 
   typecheck:
     name: Type Check
@@ -42,6 +45,12 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @nexa/database db:generate
+      # @nexa/api imports @nexa/shared and @nexa/domain, and both resolve to
+      # dist/index.js (dist/ is gitignored, so it is not in the checkout).
+      # They have to be compiled BEFORE the api build, exactly like in the
+      # Dockerfile.
+      - run: pnpm --filter @nexa/shared build
+      - run: pnpm --filter @nexa/domain build
       - run: pnpm --filter @nexa/api build
 
   test:
@@ -57,19 +66,13 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready -U nexa -d nexacrm
+          --health-cmd "pg_isready -U nexa -d nexacrm"
           --health-interval 5s
-          --health-timeout 5s
-          --health-retries 5
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 5
+          --health-timeout 10s
+          --health-retries 10
+      # No redis service on purpose: the API falls back to in-memory storage
+      # when REDIS_URL is not set (throttler + login attempts), so the test
+      # job does not depend on a second container to boot.
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
