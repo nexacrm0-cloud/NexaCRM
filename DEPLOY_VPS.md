@@ -9,7 +9,30 @@ en tu servidor** (Render queda como opción, no como dependencia).
 
 ---
 
-## 1. Requisitos
+## 0. Setup con Coolify + Traefik (el que ya tenés)
+
+`docker-compose.coolify.yml` es el compose de producción para Coolify:
+Traefik termina el TLS y enruta por el host, la red externa es `coolify` y
+no hay nginx/certbot (los maneja Coolify).
+
+En el panel de Coolify, en las **variables de entorno** de la app:
+
+| Variable                     | Valor                            | Por qué                                                                                                                                             |
+| ---------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `FRONTEND_URL`               | `https://nexa.nexacrm.dpdns.org` | es la base de los links de demo                                                                                                                     |
+| `NEXT_PUBLIC_API_URL`        | `/api/v1`                        | **relativo**: el browser usa el proxy del mismo origen. Si queda apuntando a un dominio viejo (ej. Render), el web sigue llamando ahí y no a tu API |
+| `JWT_DEMO_ACCESS_SECRET`     | `openssl rand -base64 64`        | secret de los links de demo (opcional: cae en `JWT_SECRET`)                                                                                         |
+| `ALLOW_STUB_PAYMENT_IN_PROD` | `1`                              | la demo **no debe cobrar de verdad**; sin este flag la API se niega a arrancar en producción                                                        |
+| `INTERNAL_API_KEY`           | `openssl rand -hex 32`           | habilita `POST /demo/access` (crear demos)                                                                                                          |
+
+Después: **redeploy del web** (el bundle lleva la API_URL adentro, así que
+cambiar `NEXT_PUBLIC_API_URL` requiere reconstruir la imagen).
+
+Con `NEXT_PUBLIC_API_URL=/api/v1` el browser pide `/api/v1/*` al mismo origen
+y el rewrite interno de Next (`next.config.js`) lo reenvía a
+`http://api:4000` → sin CORS y con las cookies de sesión funcionando.
+
+## 1. Requisitos (deploy manual, sin Coolify)
 
 - Docker + Docker Compose v2 en el VPS
 - El dominio apuntando al VPS (si usás Cloudflare por delante: proxy activado,
@@ -156,10 +179,13 @@ hacer nada a mano.
 
 ## Troubleshooting
 
-| Síntoma                                      | Causa probable                                                                              |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `/api/v1/health` → 503 en el dominio         | el proxy no reenvía a la API                                                                |
-| el login da error de red                     | `NEXT_PUBLIC_API_URL` quedó apuntando a otro host (rebuild)                                 |
-| `relation "quote_number_seq" does not exist` | faltó la migración `20261107000000_ensure_quote_number_seq` (corré `prisma migrate deploy`) |
-| el login muestra el 404 de Prisma            | `DATABASE_URL` apunta a un rol `NOLOGIN` (usá el owner)                                     |
-| la demo no muestra datos                     | el tenant quedó vacío: el seed no corrió sobre esa base                                     |
+| Síntoma                                                     | Causa probable                                                                                                             |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `/api/v1/health` → 503 en el dominio                        | el proxy no reenvía a la API                                                                                               |
+| el login da error de red                                    | `NEXT_PUBLIC_API_URL` quedó apuntando a otro host (rebuild)                                                                |
+| `FALTAN variables de entorno críticas: WHATSAPP_APP_SECRET` | la API exige las 3 variables de WhatsApp si configuras **alguna**. Si no usás WhatsApp, dejalas vacías (ya es condicional) |
+| `REFUSANDO arrancar con StubPaymentProvider en produccion`  | falta `ALLOW_STUB_PAYMENT_IN_PROD=1` (la demo no debe cobrar de verdad)                                                    |
+| `relation "quote_number_seq" does not exist`                | faltó la migración `20261107000000_ensure_quote_number_seq` (corré `prisma migrate deploy`)                                |
+| el login muestra el 404 de Prisma                           | `DATABASE_URL` apunta a un rol `NOLOGIN` (usá el owner)                                                                    |
+| la demo no muestra datos                                    | el tenant quedó vacío: el seed no corrió sobre esa base                                                                    |
+| `Cannot find module '@nexa/shared'` al construir la imagen  | orden de compilación en el Dockerfile: `@nexa/shared` y `@nexa/domain` van **antes** de `@nexa/database` y `@nexa/api`     |

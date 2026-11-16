@@ -90,6 +90,9 @@ services:
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET es requerido}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET es requerido}
       JWT_2FA_PENDING_SECRET: ${JWT_2FA_PENDING_SECRET:?JWT_2FA_PENDING_SECRET es requerido}
+      # Secret dedicado a los links de demo de un click (POST /demo/access).
+      # Si se deja vacio, cae en JWT_SECRET.
+      JWT_DEMO_ACCESS_SECRET: ${JWT_DEMO_ACCESS_SECRET:-}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:?INTERNAL_API_KEY es requerido}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       GROQ_API_KEY: ${GROQ_API_KEY:-}
@@ -99,7 +102,12 @@ services:
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       EMAIL_FROM: ${EMAIL_FROM:-noreply@nexacrm.com}
       WORKFLOWS_ENABLED: ${WORKFLOWS_ENABLED:-false}
-      ALLOW_STUB_PAYMENT_IN_PROD: ${ALLOW_STUB_PAYMENT_IN_PROD:-}
+      # La API se NIEGA a arrancar en produccion con el proveedor de pagos
+      # stub salvo que este flag este en 1. La demo comercial no debe cobrar
+      # de verdad, asi que el default es 1 (stub = no cobra nada).
+      # Cuando haya MercadoPago/Stripe reales configurados: dejarlo en 0 (o
+      # vacio) y poner PAYMENT_PROVIDER_KIND=mercadopago|stripe.
+      ALLOW_STUB_PAYMENT_IN_PROD: ${ALLOW_STUB_PAYMENT_IN_PROD:-1}
       PAYMENT_PROVIDER_KIND: ${PAYMENT_PROVIDER_KIND:-stub}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
