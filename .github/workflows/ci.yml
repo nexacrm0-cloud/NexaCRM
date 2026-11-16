@@ -85,6 +85,12 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @nexa/database db:generate
+      # The specs import @nexa/shared and @nexa/database, which resolve to
+      # dist/index.js. Without compiling them first the suites fail with
+      # "Cannot find module '@nexa/shared'".
+      - run: pnpm --filter @nexa/shared build
+      - run: pnpm --filter @nexa/domain build
+      - run: pnpm --filter @nexa/database build
       # `migrate deploy` (not `migrate dev`): dev is interactive and always
       # fails on CI.
       - run: pnpm --filter @nexa/database db:migrate:deploy
