@@ -45,12 +45,13 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @nexa/database db:generate
-      # @nexa/api imports @nexa/shared and @nexa/domain, and both resolve to
-      # dist/index.js (dist/ is gitignored, so it is not in the checkout).
-      # They have to be compiled BEFORE the api build, exactly like in the
-      # Dockerfile.
+      # @nexa/api imports @nexa/shared, @nexa/domain and @nexa/database, and
+      # all three resolve to dist/index.js (dist/ is gitignored, so it is not
+      # in the checkout). They have to be compiled BEFORE the api build,
+      # exactly like in the Dockerfile.
       - run: pnpm --filter @nexa/shared build
       - run: pnpm --filter @nexa/domain build
+      - run: pnpm --filter @nexa/database build
       - run: pnpm --filter @nexa/api build
 
   test:
@@ -84,7 +85,9 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @nexa/database db:generate
-      - run: pnpm --filter @nexa/database db:migrate
+      # `migrate deploy` (not `migrate dev`): dev is interactive and always
+      # fails on CI.
+      - run: pnpm --filter @nexa/database db:migrate:deploy
         env:
           DATABASE_URL: postgresql://nexa:nexa123@localhost:5432/nexacrm?schema=public
       - run: pnpm --filter @nexa/api test
