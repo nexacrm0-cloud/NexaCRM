@@ -276,10 +276,12 @@ async function bootstrap() {
     Sentry.setupExpressErrorHandler(app as any);
   }
 
-  // Render injects PORT (default 10000) and expects the app to listen there;
-  // API_PORT is used locally. Prefer PORT so the internal health check and
-  // the public route hit the same listener.
-  const port = process.env.PORT || process.env.API_PORT || 4000;
+  // The API_PORT variable wins: the compose files declare it explicitly
+  // (API_PORT=4000) and the reverse proxy (Traefik) routes to that same
+  // port. `PORT` is the fallback because PaaS-style platforms inject it
+  // automatically — and Coolify does inject PORT into the containers, so
+  // preferring it would make the API listen on a port nothing routes to.
+  const port = process.env.API_PORT || process.env.PORT || 4000;
   await app.listen(port);
   logger.log(`Nexa CRM API running on http://localhost:${port}/api/v1`);
 }
