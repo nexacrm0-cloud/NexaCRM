@@ -1,11 +1,13 @@
 name: CD
 
-# CD pipeline: build & push Docker images a GHCR tras tag v* (release) o push a main.
+# CD pipeline: build & push Docker images a GHCR tras tag v* (release) o push a master.
 # Deploy por SSH al VPS es opcional y solo corre si todos los secrets SSH_* estan configurados.
 
 on:
   push:
-    branches: [main]
+    # The repo's default branch is `master` (NOT `main`): with `main` only, this
+    # workflow never ran on a single push.
+    branches: [master, main]
     tags: ['v*']
   workflow_dispatch:
     inputs:
@@ -129,7 +131,10 @@ jobs:
         run: |
           mkdir bundle
           cp docker-compose.prod.yml bundle/
-          cp docker/nginx.conf bundle/
+          # The Coolify variant (Traefik instead of nginx) is the one used on
+          # the current VPS: without it the deploy would push the wrong stack.
+          cp docker-compose.coolify.yml bundle/ 2>/dev/null || true
+          cp docker/nginx.conf bundle/ 2>/dev/null || true
           mkdir bundle/docker
           cp -r docker/* bundle/docker/ || true
           tar -czf deploy.tar.gz -C bundle .
@@ -158,8 +163,18 @@ jobs:
             cd /opt/nexa
             # Auth a GHCR con el PAT almacenado como secret
             echo "${{ secrets.GHCR_PULL_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USER }} --password-stdin
-            docker compose -f docker-compose.prod.yml pull api web
-            docker compose -f docker-compose.prod.yml up -d --force-recreate api web nginx
+            # Coolify/Traefik stack if it is the one deployed on this host,
+            # otherwise the classic nginx one.
+            if [ -f docker-compose.coolify.yml ]; then
+              CF=docker-compose.coolify.yml
+              SERVICES="api web"
+            else
+              CF=docker-compose.prod.yml
+              SERVICES="api web nginx"
+            fi
+            echo "Deploy con $CF ($SERVICES)"
+            docker compose -f $CF pull $SERVICES
+            docker compose -f $CF up -d --force-recreate $SERVICES
             docker image prune -f
             rm -rf /tmp/nexa-deploy
             echo "Deploy de Nexa CRM completado en ${{ github.ref }}"

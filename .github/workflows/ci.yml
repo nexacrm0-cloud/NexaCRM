@@ -2,9 +2,11 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    # The repo's default branch is `master` (NOT `main`): with `main` only, the
+    # CI never validated a single push.
+    branches: [master, main, develop]
   pull_request:
-    branches: [main, develop]
+    branches: [master, main, develop]
 
 env:
   NODE_VERSION: 20
