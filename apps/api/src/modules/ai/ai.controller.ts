@@ -2,6 +2,7 @@ import { Controller, Post, Get, Body, UseGuards, HttpCode, HttpStatus } from '@n
 import { Throttle } from '@nestjs/throttler';
 import { AiService } from './ai.service';
 import { AiContextBuilderService } from './ai-context-builder.service';
+import { AiChatService } from './ai-chat.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -15,6 +16,7 @@ export class AiController {
   constructor(
     private readonly aiService: AiService,
     private readonly aiContextBuilder: AiContextBuilderService,
+    private readonly aiChatService: AiChatService,
   ) {}
 
   @Post('query')
@@ -78,5 +80,15 @@ export class AiController {
   @Throttle({ default: { limit: 20, ttl: 60000 } })
   async alerts(@CurrentUser() user: AuthenticatedUser) {
     return this.aiService.getProactiveAlerts(user);
+  }
+
+  @Post('chat')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async chat(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodPipe(aiQuerySchema)) body: { query: string },
+  ) {
+    return this.aiChatService.chat(body.query, user);
   }
 }
