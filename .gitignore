@@ -1,4 +1,4 @@
-node_modules/
+﻿node_modules/
 dist/
 .next/
 *.log
@@ -21,6 +21,8 @@ apps/api/*.log
 apps/web/*.log
 uploads/
 .turbo/
+.env.coolify
+
 # Local n8n workflow exports tend to contain inlined secrets (agent/internal
 # API keys, LLM provider keys). They should never be committed; deploy them
 # as separate environment variables / secrets in the n8n instance instead.
