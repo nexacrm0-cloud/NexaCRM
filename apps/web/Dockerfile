@@ -17,6 +17,12 @@ COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
 COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
+# Build-time env for the API URL (used by next.config.js rewrites).
+# Defaults to the internal Docker service name; Coolify can override via build arg.
+ARG API_URL=http://api:4000
+ENV API_URL=$API_URL
+ARG NEXT_PUBLIC_API_URL=/api/v1
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 # @nexa/shared resolves to dist/index.js (main field), so it must be compiled
 # before web builds. dist/ is gitignored and excluded from the build context.
 RUN pnpm --filter @nexa/shared build
