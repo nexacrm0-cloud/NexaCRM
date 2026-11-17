@@ -85,7 +85,7 @@ export class MercadoPagoProvider implements PaymentProvider {
     // takes precedence over any dashboard config.
     this.notificationUrl =
       this.config.get<string>('MP_NOTIFICATION_URL') ??
-      'https://nexa-api-unv3.onrender.com/api/v1/automation/webhooks/mercadopago';
+      'https://nexa.nexacrm.dpdns.org/api/v1/automation/webhooks/mercadopago';
 
     this.axios = axios.create({
       baseURL: this.baseUrl,

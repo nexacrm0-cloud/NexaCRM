@@ -135,10 +135,11 @@ pnpm demo:create --email=prospecto@acme.com --name="Acme S.A." --contact="Juan P
 `FRONTEND_URL` es la base de los links, así que tiene que ser una URL que el
 prospecto pueda abrir:
 
-- **Render (recomendado en producción)**: `FRONTEND_URL=https://nexa-web-c0ab.onrender.com`.
-  El deploy es automático con cada commit a `master`
-  (`autoDeployTrigger: commit` en `render.yaml`).
-- **Túnel de Cloudflare (para staging o mientras Render no esté disponible)**:
+- **Producción (Coolify + Traefik)**: `FRONTEND_URL=https://nexa.nexacrm.dpdns.org`.
+  El deploy es automático con cada commit a `master` (Coolify rebuilds el
+  compose `docker-compose.coolify.yml`). Las variables van en el panel de
+  Coolify: mirá [`DEPLOY_VPS.md`](./DEPLOY_VPS.md).
+- **Túnel de Cloudflare (para staging o mientras Coolify no esté disponible)**:
   ```bash
   cloudflared tunnel --url http://localhost:3000 --no-autoupdate
   # -> https://<algo>.trycloudflare.com

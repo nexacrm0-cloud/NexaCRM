@@ -35,7 +35,7 @@ function buildCsp(nonce: string): string {
   const apiOrigin = (() => {
     const defaultApiBase =
       process.env.NODE_ENV === 'production'
-        ? 'https://nexa-api-unv3.onrender.com'
+        ? 'https://nexa.nexacrm.dpdns.org'
         : 'http://localhost:4000';
     return new URL(process.env.API_URL || defaultApiBase).origin;
   })();

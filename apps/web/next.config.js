@@ -1,12 +1,15 @@
 const { withSentryConfig } = require('@sentry/nextjs');
 
 // Fallback for when API_URL / NEXT_PUBLIC_API_URL are not injected at build
-// time (Render doesn't propagate render.yaml env to pre-existing services).
-// Next.js bakes these into the standalone server / client bundle at build, so
-// they must resolve to the real prod API here.
+// time. Next.js bakes these into the standalone server / client bundle at
+// build, so they must resolve to the real prod API here.
+//
+// In production the API is reached through the SAME origin (/api/* -> the
+// rewrite below), so this is only the last-resort fallback: the public
+// domain.
 const defaultApiBase =
   process.env.NODE_ENV === 'production'
-    ? 'https://nexa-api-unv3.onrender.com'
+    ? 'https://nexa.nexacrm.dpdns.org'
     : 'http://localhost:4000';
 
 /** @type {import('next').NextConfig} */

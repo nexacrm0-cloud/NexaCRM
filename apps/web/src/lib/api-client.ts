@@ -4,11 +4,20 @@ function getCookie(name: string): string | null {
   return match?.[1] ? decodeURIComponent(match[1]) : null;
 }
 
+/**
+ * Base of the API.
+ *
+ * In production it is the RELATIVE path `/api/v1`: the browser then calls the
+ * same origin and Next.js rewrites it to the API container (see
+ * `next.config.js` -> `API_URL`). Same origin means no CORS and the session
+ * cookies just work.
+ *
+ * The absolute fallback is only for a build where `NEXT_PUBLIC_API_URL` was
+ * not injected: it points to the public domain, never to a dead host.
+ */
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ||
-  (process.env.NODE_ENV === 'production'
-    ? 'https://nexa-api-unv3.onrender.com/api/v1'
-    : 'http://localhost:4000/api/v1');
+  (process.env.NODE_ENV === 'production' ? '/api/v1' : 'http://localhost:4000/api/v1');
 
 class ApiClient {
   private baseUrl: string;

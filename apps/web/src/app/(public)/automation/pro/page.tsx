@@ -22,11 +22,16 @@ export const metadata: Metadata = {
     'Plantillas de automatización que conectan tu CRM con WhatsApp, Slack, Mailchimp y tu back-office. Activá 14 días gratis, sin tarjeta.',
 };
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL ||
-  (process.env.NODE_ENV === 'production'
-    ? 'https://nexa-api-unv3.onrender.com/api/v1'
-    : 'http://localhost:4000/api/v1');
+// This is a Server Component: the fetch runs on the server, where a
+// RELATIVE url does not resolve. So the API container is addressed directly
+// (Coolify sets API_URL=http://api:4000); the public domain is the fallback.
+const API_BASE = (() => {
+  if (process.env.API_URL) return `${process.env.API_URL}/api/v1`;
+  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+  return process.env.NODE_ENV === 'production'
+    ? 'https://nexa.nexacrm.dpdns.org/api/v1'
+    : 'http://localhost:4000/api/v1';
+})();
 
 const ICONS: Record<string, LucideIcon> = {
   MessageCircle,
